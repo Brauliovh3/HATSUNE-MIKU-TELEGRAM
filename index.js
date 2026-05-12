@@ -1,5 +1,6 @@
 import { TelegramClient } from "telegram";
 import { StringSession } from "telegram/sessions/index.js";
+import { NewMessage } from "telegram/events/index.js";
 import { Api } from "telegram";
 import QRCode from "qrcode";
 import input from "input";
@@ -8,32 +9,29 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-
-
 const apiId = parseInt(process.env.API_ID);
 const apiHash = process.env.API_HASH;
-
 
 
 let sessionString = "";
 let sessionData = null;
 
 if (fs.existsSync("./session.txt")) {
-  sessionString = fs.readFileSync("./session.txt", "utf8");
-  
-  
+  sessionString = fs.readFileSync("./session.txt", "utf8").trim();
+
   if (fs.existsSync("./session.json")) {
     try {
       sessionData = JSON.parse(fs.readFileSync("./session.json", "utf8"));
-      console.log("📁 Información de sesión encontrada:");
-      console.log(`👤 Usuario: ${sessionData.firstName || 'N/A'} ${sessionData.lastName || ''}`);
-      console.log(`🆔 ID: ${sessionData.userId || 'N/A'}`);
+      console.log("📁 Sesión encontrada:");
+      console.log(`👤 Usuario: ${sessionData.firstName || "N/A"} ${sessionData.lastName || ""}`);
+      console.log(`🆔 ID: ${sessionData.userId || "N/A"}`);
       console.log(`📅 Creada: ${new Date(sessionData.created).toLocaleString()}`);
     } catch (e) {
       console.log("⚠️ Error leyendo session.json, usando solo session.txt");
     }
   }
 }
+
 
 const client = new TelegramClient(
   new StringSession(sessionString),
@@ -45,7 +43,6 @@ const client = new TelegramClient(
 );
 
 
-
 await client.connect();
 
 console.log("=================================");
@@ -53,81 +50,77 @@ console.log("💙 HATSUNE MIKU USERBOT 💙");
 console.log("=================================\n");
 
 
-
 if (sessionString.length > 5) {
-
   console.log("✅ Sesión encontrada");
-  console.log("🤖 Userbot conectado");
-
+  console.log("🤖 Userbot conectado\n");
   startBot();
-
 } else {
-
-  console.log("1 => Login por código");
+  console.log("1 => Login por código (recomendado en servidor)");
   console.log("2 => Login por QR\n");
 
   const option = await input.text("Selecciona opción: ");
 
-
   if (option === "1") {
+    await phoneLoginFlow();
+  } else if (option === "2") {
+    await qrLoginFlow();
+  } else {
+    console.log("❌ Opción inválida");
+    process.exit(0);
+  }
+}
 
+
+async function phoneLoginFlow() {
+  console.log("\n📱 Iniciando login por código...\n");
+
+  try {
     await client.start({
-
-      phoneNumber: async () =>
-        await input.text("📱 Número Telegram: "),
-
-      password: async () =>
-        await input.text("🔐 Contraseña 2FA: "),
-
-      phoneCode: async () =>
-        await input.text("💬 Código Telegram: "),
-
-      onError: (err) => console.log(err),
-
+      phoneNumber: async () => await input.text("📱 Número Telegram (+51...): "),
+      password: async () => await input.text("🔐 Contraseña 2FA (Enter si no tienes): "),
+      phoneCode: async () => await input.text("💬 Código recibido en Telegram: "),
+      onError: (err) => console.log("❌ Error:", err),
     });
 
     const session = client.session.save();
-
     fs.writeFileSync("./session.txt", session);
 
-    console.log("✅ Login exitoso");
-    console.log("💾 Sesión guardada");
+    const me = await client.getMe();
+    const data = {
+      session,
+      userId: me.id?.toString(),
+      firstName: me.firstName,
+      lastName: me.lastName,
+      username: me.username,
+      phone: me.phone,
+      created: new Date().toISOString(),
+    };
+
+    fs.writeFileSync("./session.json", JSON.stringify(data, null, 2));
+
+    console.log("\n✅ Login exitoso");
+    console.log(`👤 Bienvenido, ${me.firstName}!`);
+    console.log("💾 Sesión guardada\n");
 
     startBot();
-
+  } catch (error) {
+    console.error("❌ Error en login:", error.message);
+    process.exit(1);
   }
-
-
-
-  else if (option === "2") {
-
-    await qrLoginFlow();
-
-  } else {
-
-    console.log(" Opción inválida");
-    process.exit(0);
-
-  }
-
 }
 
 
 async function qrLoginFlow() {
-  console.log(" Iniciando proceso de QR Login...\n");
+  console.log("\n📷 Iniciando QR Login...\n");
+  console.log("⚠️  NOTA: En servidores remotos el QR puede fallar.");
+  console.log("    Si falla, reinicia y usa la opción 1.\n");
 
   try {
-    console.log(" Generando token de QR...");
-    console.log(" NOTA: Los tokens de Telegram expiran muy rápido");
-    console.log(" Escanea el QR inmediatamente después de aparecer\n");
-
-
     const result = await client.invoke(
       new Api.auth.ExportLoginToken({
         apiId,
         apiHash,
         exceptIds: [],
-        apiHash: apiHash,
       })
     );
 
@@ -142,206 +135,148 @@ async function qrLoginFlow() {
     console.log(qrTerminal);
     await QRCode.toFile("./telegram-qr.png", qr);
 
-    console.log(" QR guardado: telegram-qr.png");
-    console.log(" ESCANEA INMEDIATAMENTE:");
+    console.log("📁 QR guardado: telegram-qr.png");
+    console.log("📲 Pasos:");
     console.log("   1. Abre Telegram en tu teléfono");
-    console.log("   2. Ve a Settings > Devices > Link Desktop Device");
-    console.log("   3. Escanea el QR AHORA");
-    console.log("   4. O abre directamente: " + qr);
-    console.log("\n NOTA: El QR expira en segundos - ESCANEA AHORA!");
+    console.log("   2. Settings > Devices > Link Desktop Device");
+    console.log("   3. Escanea el QR AHORA (expira en segundos)\n");
 
-    
     let escaneado = false;
     let intentos = 0;
-    const maxIntentos = 30; 
-
-    console.log(" Verificando cada 500ms...");
+    const maxIntentos = 40;
 
     while (!escaneado && intentos < maxIntentos) {
-      await new Promise((r) => setTimeout(r, 500)); 
+      await new Promise((r) => setTimeout(r, 500));
       intentos++;
 
       try {
         const loginResult = await client.invoke(
-          new Api.auth.ImportLoginToken({
-            token: result.token,
-          })
+          new Api.auth.ImportLoginToken({ token: result.token })
         );
 
         if (loginResult instanceof Api.auth.LoginTokenSuccess) {
           escaneado = true;
+          const user = loginResult.authorization.user;
+          console.log(`\n✅ QR escaneado exitosamente!`);
+          console.log(`👤 Usuario: ${user.firstName}`);
 
-          console.log("\n Escaneado exitosamente!");
-          console.log(" Usuario:", loginResult.authorization.user.firstName || "Desconocido");
-
-    
-          const sessionName = `session_${Date.now()}`;
-          const sessionPath = `./sessions/${sessionName}`;
-
-          if (!fs.existsSync("./sessions")) {
-            fs.mkdirSync("./sessions");
-          }
-
-          await client.connect();
           const session = client.session.save();
-
-     
           fs.writeFileSync("./session.txt", session);
 
-        
-          const sessionData = {
-            session: session,
-            userId: loginResult.authorization.user.id,
-            firstName: loginResult.authorization.user.firstName,
-            lastName: loginResult.authorization.user.lastName,
-            username: loginResult.authorization.user.username,
-            phone: loginResult.authorization.user.phone,
+          const data = {
+            session,
+            userId: user.id?.toString(),
+            firstName: user.firstName,
+            lastName: user.lastName,
+            username: user.username,
+            phone: user.phone,
             created: new Date().toISOString(),
-            sessionName: sessionName,
           };
 
-          fs.writeFileSync(`${sessionPath}.txt`, session);
-          fs.writeFileSync(`${sessionPath}.json`, JSON.stringify(sessionData, null, 2));
-          fs.writeFileSync("./session.json", JSON.stringify(sessionData, null, 2));
+          if (!fs.existsSync("./sessions")) fs.mkdirSync("./sessions");
+          const sessionName = `session_${Date.now()}`;
+          fs.writeFileSync(`./sessions/${sessionName}.txt`, session);
+          fs.writeFileSync(`./sessions/${sessionName}.json`, JSON.stringify(data, null, 2));
+          fs.writeFileSync("./session.json", JSON.stringify(data, null, 2));
 
-          console.log(" Sesión guardada correctamente:");
-          console.log(`   Principal: session.txt`);
-          console.log(`   Backup: sessions/${sessionName}.txt`);
-          console.log(`   Datos: sessions/${sessionName}.json`);
-          console.log(" Conexión establecida y verificada");
-
+          console.log("💾 Sesión guardada\n");
           startBot();
           return;
-        } else if (loginResult instanceof Api.auth.LoginTokenNeeded) {
-          process.stdout.write(` Esperando escaneo... (${intentos}/${maxIntentos})\r`);
+        } else {
+          process.stdout.write(`⏳ Esperando escaneo... (${intentos}/${maxIntentos})\r`);
         }
       } catch (e) {
-        if (e.message.includes("TOKEN_EXPIRED") || e.message.includes("EXPIRED")) {
-          console.log("\n Token expirado - intenta de nuevo");
+        if (e.message?.includes("TOKEN_EXPIRED") || e.message?.includes("EXPIRED")) {
+          console.log("\n⏰ Token expirado.");
           break;
-        } else if (e.message.includes("SESSION_PASSWORD_NEEDED")) {
-          console.log("\n Se requiere contraseña 2FA");
-          const password = await input.text(" Contraseña 2FA: ");
+        } else if (e.message?.includes("SESSION_PASSWORD_NEEDED")) {
+          console.log("\n🔐 Se requiere contraseña 2FA");
+         
           break;
         }
       }
     }
 
     if (!escaneado) {
-      console.log("\n No se pudo escanear el QR a tiempo");
-      console.log(" Opción: Usa login por código (opción 1) para más tiempo");
-
-
-      const usarCodigo = await input.text("¿Quieres intentar con código? (s/n): ");
-      if (usarCodigo.toLowerCase() === "s") {
+      console.log("\n❌ No se pudo escanear el QR a tiempo.");
+      const retry = await input.text("¿Usar login por código en su lugar? (s/n): ");
+      if (retry.toLowerCase() === "s") {
         await phoneLoginFlow();
-        return;
+      } else {
+        process.exit(0);
       }
     }
   } catch (error) {
-    console.error(" Error en el proceso de QR:", error.message);
-    console.log(" Intenta con login por código (opción 1)");
-  }
-
-  console.log("\n Volviendo al menú principal...");
-  process.exit(0);
-}
-
-
-async function phoneLoginFlow() {
-  console.log("\n Iniciando login por código...\n");
-
-  try {
-    await client.start({
-      phoneNumber: async () => await input.text(" Número Telegram: "),
-      password: async () => await input.text(" Contraseña 2FA: "),
-      phoneCode: async () => await input.text(" Código Telegram: "),
-      onError: (err) => console.log(err),
-    });
-
-    const session = client.session.save();
-    fs.writeFileSync("./session.txt", session);
-
-
-    const me = await client.getMe();
-    const sessionData = {
-      session: session,
-      userId: me.id,
-      firstName: me.firstName,
-      lastName: me.lastName,
-      username: me.username,
-      phone: me.phone,
-      created: new Date().toISOString(),
-    };
-
-    fs.writeFileSync("./session.json", JSON.stringify(sessionData, null, 2));
-
-    console.log(" Login exitoso");
-    console.log(" Sesión guardada");
-    console.log(` Usuario: ${me.firstName}`);
-
-    startBot();
-  } catch (error) {
-    console.error(" Error en login por código:", error.message);
+    console.error("❌ Error en QR:", error.message);
+    console.log("💡 Intenta con la opción 1 (código).");
+    process.exit(1);
   }
 }
 
 
 function startBot() {
-  console.log("\n=================================");
-  console.log(" USERBOT ONLINE");
+  console.log("=================================");
+  console.log("🟢 USERBOT ONLINE");
   console.log("=================================\n");
 
-
-  
-  if (!client.connected) {
-    console.log("🔄 Reconectando cliente...");
-    client.connect().then(() => {
-      console.log("✅ Cliente conectado correctamente");
-    }).catch(err => {
-      console.error("❌ Error al conectar:", err);
-    });
-  }
-
+ 
   client.addEventHandler(async (event) => {
-
     const msg = event.message;
 
     if (!msg || !msg.message) return;
 
-    const text = msg.message;
+    const text = msg.message.trim();
 
-    console.log("📩 Mensaje recibido:", text);
+    console.log(`📩 [${new Date().toLocaleTimeString()}] Mensaje: ${text}`);
 
     try {
       if (text === ".ping") {
-        console.log("🏓 Respondiendo a .ping");
-        await client.sendMessage(msg.chatId, {
-          message: "🏓 Pong",
+        console.log("🏓 Respondiendo .ping");
+        await msg.reply({ message: "🏓 Pong!" });
+      }
+
+      else if (text === ".menu") {
+        console.log("📋 Respondiendo .menu");
+        await msg.reply({
+          message: `💙 **HATSUNE MIKU USERBOT** 💙\n\n⚡ \`.ping\` — Verificar conexión\n📋 \`.menu\` — Ver comandos\n👤 \`.me\` — Ver tu info\n🗑️ \`.del\` — Borrar mensaje (responde a uno)`,
+          parseMode: "markdown",
         });
       }
 
-      if (text === ".menu") {
-        console.log("📋 Respondiendo a .menu");
-        await client.sendMessage(msg.chatId, {
-          message: `
-💙 HATSUNE MIKU USERBOT 💙
-
-⚡ .ping
-📋 .menu
-`,
+      else if (text === ".me") {
+        const me = await client.getMe();
+        await msg.reply({
+          message: `👤 **Tu información:**\n\n🆔 ID: \`${me.id}\`\n👤 Nombre: ${me.firstName} ${me.lastName || ""}\n🔖 Username: @${me.username || "sin username"}\n📱 Teléfono: +${me.phone}`,
+          parseMode: "markdown",
         });
       }
+
+      else if (text === ".del") {
+        if (msg.replyTo) {
+          const replied = await msg.getReplyMessage();
+          if (replied) await replied.delete({ revoke: true });
+          await msg.delete({ revoke: true });
+        } else {
+          await msg.delete({ revoke: true });
+        }
+      }
+
     } catch (error) {
-      console.error("❌ Error al enviar mensaje:", error);
+      console.error("❌ Error al procesar mensaje:", error.message);
     }
 
-  });
+ 
+  }, new NewMessage({ outgoing: true }));
 
-  console.log("🎧 Bot escuchando comandos...");
-
+  console.log("🎧 Escuchando comandos...");
+  console.log("💡 Comandos: .ping | .menu | .me | .del\n");
 }
 
 
-process.on("uncaughtException", console.error);
-process.on("unhandledRejection", console.error);
+process.on("uncaughtException", (err) => {
+  console.error("💥 Error no capturado:", err.message);
+});
+
+process.on("unhandledRejection", (err) => {
+  console.error("💥 Promesa rechazada:", err?.message || err);
+});
