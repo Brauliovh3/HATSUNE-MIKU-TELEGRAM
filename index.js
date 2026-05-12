@@ -1,6 +1,6 @@
 import { TelegramClient } from "telegram";
 import { StringSession } from "telegram/sessions/index.js";
-import { NewMessage } from "telegram/events/index.js";
+import { NewMessage, CallbackQuery } from "telegram/events/index.js";
 import { Api } from "telegram";
 import QRCode from "qrcode";
 import input from "input";
@@ -295,26 +295,23 @@ async function startBot() {
 
   
   client.addEventHandler(async (event) => {
-    const callbackQuery = event.callbackQuery;
-    if (!callbackQuery) return;
+    const data = event.query.data.toString();
+    console.log('Callback data:', data);
 
-    const data = callbackQuery.data;
-    if (!data) return;
-
-    
+    // Find command that handles this callback
     for (const [cmdName, cmd] of global.commands) {
       if (cmd.callback && typeof cmd.callback === 'function') {
         try {
           const ctx = {
             client,
-            callbackQuery,
-            chatId: callbackQuery.chatId,
-            senderId: callbackQuery.senderId,
+            query: event.query,
+            chatId: event.query.chatId,
+            senderId: event.query.senderId,
             answerCallbackQuery: async (options) => {
               if (typeof options === 'string') {
-                return await callbackQuery.answer({ message: options });
+                return await event.query.answer({ message: options });
               }
-              return await callbackQuery.answer(options);
+              return await event.query.answer(options);
             }
           };
           
@@ -322,14 +319,14 @@ async function startBot() {
           return;
         } catch (e) {
           console.error(`❌ Error en callback ${cmdName}:`, e.message);
-          await callbackQuery.answer({ 
+          await event.query.answer({ 
             text: "❌ Error al procesar la acción.", 
             showAlert: true 
           });
         }
       }
     }
-  });
+  }, new CallbackQuery({}));
 
   console.log("🎧 Escuchando comandos en todos los chats...");
   console.log("💡 Todos los comandos están cargados desde carpetas\n");

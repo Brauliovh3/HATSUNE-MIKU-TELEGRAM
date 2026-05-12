@@ -72,20 +72,28 @@ export default {
 📥 *Elige formato para descargar:*`;
 
        
-        await ctx.client.sendFile(ctx.chatId, {
-          file: thumbnailUrl,
-          caption: message,
+        await ctx.client.sendMessage(ctx.chatId, {
+          message: `🎵 *VIDEO ENCONTRADO* 🎵
+
+📝 *Título:* ${title}
+🆔 *ID:* ${videoId}
+
+📥 *Elige formato para descargar:*`,
           parseMode: 'markdown',
-          reply_markup: {
-            inline_keyboard: [
-              [
-                { text: '🎵 Descargar Audio MP3', callback_data: `download_audio_${videoId}` }
-              ],
-              [
-                { text: '🎥 Descargar Video MP4', callback_data: `download_video_${videoId}` }
-              ]
+          buttons: [
+            [
+              {
+                text: '🎵 Descargar Audio MP3',
+                data: Buffer.from(`audio_${videoId}`)
+              }
+            ],
+            [
+              {
+                text: '🎥 Descargar Video MP4',
+                data: Buffer.from(`video_${videoId}`)
+              }
             ]
-          }
+          ]
         });
         
         setTimeout(() => {
@@ -128,20 +136,18 @@ export default {
 
   async callback(ctx, callbackData) {
     try {
-      const [action, format, actualVideoId] = callbackData.split('_');
+      const data = callbackData.toString();
       
-      if (action === 'download' && (format === 'audio' || format === 'video')) {
+      if (data.startsWith('audio_')) {
+        const actualVideoId = data.replace('audio_', '');
         
         await ctx.answerCallbackQuery({
-          text: `⏳ *Preparando descarga de ${format === 'audio' ? 'Audio MP3' : 'Video MP4'}...*`,
+          text: `⏳ *Preparando descarga de Audio MP3...*`,
           showAlert: true
         });
 
-      
-        const apiUrl = format === 'audio' 
-          ? `${process.env.YOUTUBE_API_URL}/dl/ytmp3?url=https://youtu.be/${actualVideoId}&key=${process.env.YOUTUBE_API_KEY}`
-          : `${process.env.YOUTUBE_API_URL}/dl/ytmp4?url=https://youtu.be/${actualVideoId}&key=${process.env.YOUTUBE_API_KEY}`;
-
+        const apiUrl = `${process.env.YOUTUBE_API_URL}/dl/ytmp3?url=https://youtu.be/${actualVideoId}&key=${process.env.YOUTUBE_API_KEY}`;
+        
         const apiResponse = await axios.get(apiUrl);
         
         if (apiResponse.data.status && apiResponse.data.data) {
