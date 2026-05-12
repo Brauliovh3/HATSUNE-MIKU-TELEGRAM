@@ -328,7 +328,7 @@ async function startBot() {
         }
       }
     }
-  }, new CallbackQuery({}));
+  }, CallbackQuery({}));
 
   console.log("🎧 Escuchando comandos en todos los chats...");
   console.log("💡 Todos los comandos están cargados desde carpetas\n");
