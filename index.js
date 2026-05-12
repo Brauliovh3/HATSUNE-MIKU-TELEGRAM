@@ -176,9 +176,9 @@ async function qrLoginFlow() {
 
 
 async function loadExternalCommands() {
-  if (!fs.existsSync("./commandLoader.js")) return;
+  if (!fs.existsSync("./nucleo/system/commandLoader.js")) return;
   try {
-    const { loadCommands } = await import("./commandLoader.js");
+    const { loadCommands } = await import("./nucleo/system/commandLoader.js");
     await loadCommands();
     console.log("📦 Comandos externos cargados\n");
   } catch (e) {
@@ -233,18 +233,33 @@ async function startBot() {
       const parts = text.slice(1).split(" ");
       const cmdName = parts[0].toLowerCase();
       const args = parts.slice(1);
-      const cmd = global.commands.get(cmdName);
-
-      if (cmd) {
-       
-        if (cmd.isOwner && senderId !== myId) return;
-
-        try {
-          await cmd.run({ client, msg, args, text, chatId, senderId, me });
-          return;
-        } catch (e) {
-          console.error(`❌ Error en comando ${cmdName}:`, e.message);
-        }
+      
+      
+      const { executeCommand } = await import("./nucleo/system/commandLoader.js");
+   
+      const ctx = {
+        client,
+        msg,
+        args,
+        text,
+        chatId,
+        senderId,
+        me,
+        myId,
+        reply: async (options) => {
+          if (typeof options === 'string') {
+            return await msg.reply({ message: options });
+          }
+          return await msg.reply(options);
+        },
+        from: msg.sender || await msg.getSender(),
+        message: msg
+      };
+      
+    
+      const result = await executeCommand(ctx, cmdName, args);
+      if (result.success) {
+        return;
       }
     }
 

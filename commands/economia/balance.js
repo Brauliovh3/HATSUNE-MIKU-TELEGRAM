@@ -2,9 +2,11 @@ export default {
   command: ['balance', 'bal'],
   category: 'economia',
   description: 'Ver tu balance de monedas',
+  middlewares: [],
+  cooldown: 2,
   async run(ctx, args) {
-    const userId = ctx.from.id.toString();
-    const user = global.db.data.users[userId];
+    const userId = ctx.senderId;
+    const user = global.db.data?.users?.[userId];
     
     if (!user) {
       return ctx.reply('❌ Error: Usuario no encontrado en la base de datos.');
@@ -30,9 +32,9 @@ export default {
 🎯 *Progreso:* ${Math.min((exp / expNeeded) * 100, 100).toFixed(1)}%
 
 💡 *Consejos:*
-• Usa /work para ganar más monedas
-• Usa /deposit para guardar en el banco
-• Usa /withdraw para retirar del banco`;
+• Usa .work para ganar más monedas
+• Usa .deposit para guardar en el banco
+• Usa .withdraw para retirar del banco`;
 
     await ctx.reply(message, {
       parse_mode: 'Markdown'

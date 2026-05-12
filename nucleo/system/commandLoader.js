@@ -5,13 +5,54 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Mapa global para almacenar comandos
+
 global.commands = new Map();
+
+
+const middlewares = {
+  isOwner: (ctx, cmd) => {
+    if (cmd.isOwner && ctx.senderId !== ctx.me.id) {
+      ctx.reply({ message: '❌ Este comando solo puede usarlo el owner.' });
+      return false;
+    }
+    return true;
+  },
+  
+  isAdmin: async (ctx, cmd) => {
+    if (cmd.isAdmin && !await checkAdmin(ctx)) {
+      ctx.reply({ message: '❌ Este comando requiere permisos de administrador.' });
+      return false;
+    }
+    return true;
+  },
+  
+  isNSFW: (ctx, cmd) => {
+    if (cmd.isNSFW && !isNSFWAllowed(ctx)) {
+      ctx.reply({ message: '❌ Este comando solo está disponible en chats NSFW.' });
+      return false;
+    }
+    return true;
+  }
+};
+
+async function checkAdmin(ctx) {
+  try {
+    const chat = await ctx.client.getEntity(ctx.chatId);
+    return chat.participants?.participants?.find(p => p.userId.toString() === ctx.senderId && p.admin) || false;
+  } catch {
+    return false;
+  }
+}
+
+function isNSFWAllowed(ctx) {
+  
+  return true; 
+}
 
 export async function loadCommands() {
   console.log('📦 Cargando comandos...');
   
-  // Cargar comandos desde diferentes carpetas
+
   const commandFolders = [
     '../commands/economia',
     '../commands/gacha', 
@@ -53,7 +94,9 @@ export async function loadCommands() {
                 category: command.category || 'misc',
                 isOwner: command.isOwner || false,
                 isAdmin: command.isAdmin || false,
-                isNSFW: command.isNSFW || false
+                isNSFW: command.isNSFW || false,
+                middlewares: command.middlewares || [],
+                cooldown: command.cooldown || 0
               });
             }
             
@@ -71,6 +114,50 @@ export async function loadCommands() {
 
   console.log(`🎉 ¡Se cargaron ${totalCommands} comandos exitosamente!`);
   console.log(`📊 Total de comandos disponibles: ${global.commands.size}`);
+}
+
+export async function executeCommand(ctx, commandName, args) {
+  const cmd = global.commands.get(commandName.toLowerCase());
+  
+  if (!cmd) {
+    return { success: false, error: 'Comando no encontrado' };
+  }
+
+  try {
+ 
+    for (const middlewareName of cmd.middlewares || []) {
+      const middleware = middlewares[middlewareName];
+      if (middleware && !(await middleware(ctx, cmd))) {
+        return { success: false, error: 'Middleware rechazó el comando' };
+      }
+    }
+
+    
+    const cooldownKey = `cooldown_${commandName}_${ctx.senderId}`;
+    const lastUsed = global.db.data?.cooldowns?.[cooldownKey] || 0;
+    if (Date.now() - lastUsed < cmd.cooldown * 1000) {
+      const remaining = Math.ceil((cmd.cooldown * 1000 - (Date.now() - lastUsed)) / 1000);
+      await ctx.reply({ message: `⏱️ Espera ${remaining}s antes de usar este comando nuevamente.` });
+      return { success: false, error: 'En cooldown' };
+    }
+
+   
+    const result = await cmd.run(ctx, args);
+    
+ 
+    if (cmd.cooldown > 0) {
+      if (!global.db.data) global.db.data = {};
+      if (!global.db.data.cooldowns) global.db.data.cooldowns = {};
+      global.db.data.cooldowns[cooldownKey] = Date.now();
+    }
+
+    return { success: true, result };
+    
+  } catch (error) {
+    console.error(`❌ Error ejecutando comando ${commandName}:`, error);
+    await ctx.reply({ message: '❌ Ocurrió un error al ejecutar el comando.' });
+    return { success: false, error: error.message };
+  }
 }
 
 export function getCommand(commandName) {
