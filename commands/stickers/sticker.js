@@ -6,23 +6,23 @@ export default {
   cooldown: 3,
   async run(ctx, args) {
     try {
+      
+      await ctx.reply('🔍 *Procesando imagen...*');
+      
       const msg = ctx.message;
       let imageBuffer = null;
       let fileName = `sticker_${Date.now()}.webp`;
 
- 
       if (msg.replyTo) {
         const repliedMsg = await msg.replyTo;
         
         if (repliedMsg.media) {
           if (repliedMsg.media.photo) {
-         
             const buffer = await ctx.client.downloadMedia(repliedMsg.media, {
               workers: 1
             });
             imageBuffer = buffer;
           } else if (repliedMsg.media.document) {
-           
             const document = repliedMsg.media.document;
             if (document.mimeType?.startsWith('image/')) {
               const buffer = await ctx.client.downloadMedia(repliedMsg.media, {
@@ -33,7 +33,6 @@ export default {
           }
         }
       } else if (msg.media) {
-       
         if (msg.media.photo) {
           const buffer = await ctx.client.downloadMedia(msg.media, {
             workers: 1
@@ -54,7 +53,8 @@ export default {
         return ctx.reply('📸 *USO:* Responde a una imagen o envía una imagen con el comando\n📝 *Ejemplo:* .s (respondiendo a una imagen)');
       }
 
-    
+      await ctx.reply('⚡ *Creando sticker...*');
+      
       await ctx.client.sendFile(ctx.chatId, {
         file: imageBuffer,
         fileName: fileName,

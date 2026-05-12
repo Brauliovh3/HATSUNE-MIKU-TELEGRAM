@@ -186,6 +186,17 @@ async function loadExternalCommands() {
   }
 }
 
+async function initializeDatabase() {
+  if (!fs.existsSync("./nucleo/system/initDB.js")) return;
+  try {
+    const { loadDatabase } = await import("./nucleo/system/initDB.js");
+    loadDatabase();
+    console.log("📁 Base de datos inicializada\n");
+  } catch (e) {
+    console.log("⚠️ Error inicializando base de datos:", e.message);
+  }
+}
+
 
 async function loadMenu() {
   if (!fs.existsSync("./commands.js")) return null;
@@ -205,6 +216,7 @@ async function startBot() {
   console.log("=================================\n");
 
  
+  await initializeDatabase();
   await loadExternalCommands();
   const menuData = await loadMenu();
 
