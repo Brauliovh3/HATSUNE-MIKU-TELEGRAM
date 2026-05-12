@@ -114,4 +114,4 @@ function loadDatabase() {
 
 loadDatabase()
 
-export { initDB };
+export { initDB, loadDatabase };
