@@ -12,7 +12,7 @@ dotenv.config();
 const apiId = parseInt(process.env.API_ID);
 const apiHash = process.env.API_HASH;
 
-// ─── Cargar sesión ────────────────────────────────────────────────────────────
+
 let sessionString = "";
 let sessionData = null;
 
@@ -32,7 +32,7 @@ if (fs.existsSync("./session.txt")) {
   }
 }
 
-// ─── Crear cliente ────────────────────────────────────────────────────────────
+
 const client = new TelegramClient(
   new StringSession(sessionString),
   apiId,
@@ -46,7 +46,6 @@ console.log("=================================");
 console.log("💙 HATSUNE MIKU USERBOT 💙");
 console.log("=================================\n");
 
-// ─── Flujo principal ──────────────────────────────────────────────────────────
 if (sessionString.length > 5) {
   console.log("✅ Sesión encontrada");
   console.log("🤖 Userbot conectado\n");
@@ -67,7 +66,7 @@ if (sessionString.length > 5) {
   }
 }
 
-// ─── Guardar sesión helper ────────────────────────────────────────────────────
+
 async function saveSession(me) {
   const session = client.session.save();
   fs.writeFileSync("./session.txt", session);
@@ -91,7 +90,7 @@ async function saveSession(me) {
   console.log("💾 Sesión guardada\n");
 }
 
-// ─── Login por código ─────────────────────────────────────────────────────────
+
 async function phoneLoginFlow() {
   console.log("\n📱 Iniciando login por código...\n");
 
@@ -116,26 +115,19 @@ async function phoneLoginFlow() {
   }
 }
 
-// ─── Login por QR (método nativo gramJS) ─────────────────────────────────────
+
 async function qrLoginFlow() {
   console.log("\n📷 Iniciando QR Login...\n");
   console.log("ℹ️  El QR se renueva automáticamente si expira.\n");
 
   try {
-   
     await client.signInUserWithQrCode(
       { apiId, apiHash },
       {
-        // Se llama cada vez que hay un nuevo QR (inicial o renovado)
         qrCode: async ({ token, expires }) => {
           const qr = `tg://login?token=${token.toString("base64url")}`;
+          const qrTerminal = await QRCode.toString(qr, { type: "terminal", small: true });
 
-          const qrTerminal = await QRCode.toString(qr, {
-            type: "terminal",
-            small: true,
-          });
-
-          // Limpiar consola y mostrar QR actualizado
           process.stdout.write("\x1Bc");
           console.log("=================================");
           console.log("💙 HATSUNE MIKU USERBOT 💙");
@@ -148,18 +140,16 @@ async function qrLoginFlow() {
           console.log("   1. Abre Telegram en tu teléfono");
           console.log("   2. Configuración > Dispositivos > Vincular dispositivo");
           console.log("   3. Escanea el QR\n");
-          const segsRestantes = Math.max(0, Math.round(expires - Date.now() / 1000));
-          console.log(`⏱️  Expira en ~${segsRestantes}s (se renueva solo)\n`);
+          const segs = Math.max(0, Math.round(expires - Date.now() / 1000));
+          console.log(`⏱️  Expira en ~${segs}s (se renueva solo)\n`);
         },
 
-        // Se llama si la cuenta tiene contraseña 2FA
         password: async (hint) => {
           console.log(`\n🔐 Se requiere contraseña 2FA${hint ? ` (pista: ${hint})` : ""}`);
           return await input.text("🔐 Contraseña 2FA: ");
         },
 
         onError: async (err) => {
-          // true = seguir reintentando, false = abortar
           if (err.message?.includes("SESSION_PASSWORD_NEEDED")) return false;
           console.log("⚠️ Error QR (reintentando):", err.message);
           return true;
@@ -167,13 +157,10 @@ async function qrLoginFlow() {
       }
     );
 
-    // Si llega aquí, gramJS ya actualizó la sesión interna correctamente
     const me = await client.getMe();
     await saveSession(me);
-
     console.log(`✅ QR Login exitoso!`);
     console.log(`👤 Bienvenido, ${me.firstName}!\n`);
-
     startBot();
 
   } catch (error) {
@@ -187,38 +174,127 @@ async function qrLoginFlow() {
   }
 }
 
-// ─── Bot principal ────────────────────────────────────────────────────────────
-function startBot() {
+
+async function loadExternalCommands() {
+  if (!fs.existsSync("./commandLoader.js")) return;
+  try {
+    const { loadCommands } = await import("./commandLoader.js");
+    await loadCommands();
+    console.log("📦 Comandos externos cargados\n");
+  } catch (e) {
+    console.log("⚠️ No se pudieron cargar comandos externos:", e.message);
+  }
+}
+
+
+async function loadMenu() {
+  if (!fs.existsSync("./commands.js")) return null;
+  try {
+    const { menuObject, categoryAliases } = await import("./commands.js");
+    return { menuObject, categoryAliases };
+  } catch (e) {
+    console.log("⚠️ No se pudo cargar commands.js:", e.message);
+    return null;
+  }
+}
+
+
+async function startBot() {
   console.log("=================================");
   console.log("🟢 USERBOT ONLINE");
   console.log("=================================\n");
+
+ 
+  await loadExternalCommands();
+  const menuData = await loadMenu();
+
+  const me = await client.getMe();
+  const myId = me.id?.toString();
+
 
   client.addEventHandler(async (event) => {
     const msg = event.message;
     if (!msg || !msg.message) return;
 
     const text = msg.message.trim();
-    console.log(`📩 [${new Date().toLocaleTimeString()}] ${text}`);
+    const chatId = msg.chatId;
+    const senderId = msg.senderId?.toString();
 
-    try {
-      if (text === ".ping") {
-        await msg.reply({ message: "🏓 Pong!" });
+   
+    if (!text.startsWith(".")) return;
+
+   
+    const isOwn = senderId === myId;
+    const origen = isOwn ? "YO" : `ID:${senderId}`;
+    console.log(`📩 [${new Date().toLocaleTimeString()}] [${origen}] Chat:${chatId} → ${text}`);
+
+   
+    if (global.commands) {
+      const parts = text.slice(1).split(" ");
+      const cmdName = parts[0].toLowerCase();
+      const args = parts.slice(1);
+      const cmd = global.commands.get(cmdName);
+
+      if (cmd) {
+       
+        if (cmd.isOwner && senderId !== myId) return;
+
+        try {
+          await cmd.run({ client, msg, args, text, chatId, senderId, me });
+          return;
+        } catch (e) {
+          console.error(`❌ Error en comando ${cmdName}:`, e.message);
+        }
       }
+    }
 
-      else if (text === ".menu") {
-        await msg.reply({
-          message:
-            "💙 **HATSUNE MIKU USERBOT** 💙\n\n" +
-            "⚡ `.ping` — Verificar conexión\n" +
-            "📋 `.menu` — Ver comandos\n" +
-            "👤 `.me` — Ver tu info\n" +
-            "🗑️ `.del` — Borrar mensaje (responde a uno)",
+   
+    try {
+
+   
+      if (text === ".ping") {
+        const start = Date.now();
+        const sent = await msg.reply({ message: "🏓 calculando..." });
+        const ms = Date.now() - start;
+        await client.editMessage(chatId, {
+          message: sent.id,
+          text: `🏓 Pong! \`${ms}ms\``,
           parseMode: "markdown",
         });
       }
 
+     
+      else if (text.startsWith(".menu")) {
+        const parts = text.split(" ");
+        const catArg = parts[1]?.toLowerCase();
+
+        if (catArg && menuData) {
+          
+          let found = null;
+          for (const [cat, aliases] of Object.entries(menuData.categoryAliases)) {
+            if (aliases.includes(catArg)) { found = cat; break; }
+          }
+          if (found && menuData.menuObject[found]) {
+            await msg.reply({ message: menuData.menuObject[found] });
+          } else {
+            await msg.reply({ message: `❌ Categoría no encontrada.\nUsa: .menu <categoria>\nCategorías: ${Object.keys(menuData.categoryAliases).join(", ")}` });
+          }
+        } else {
+          
+          const menuText = menuData
+            ? `💙 **HATSUNE MIKU USERBOT** 💙\n\n` +
+              `Usa \`.menu <categoría>\` para ver comandos:\n\n` +
+              Object.entries(menuData.categoryAliases)
+                .map(([cat, aliases]) => `• \`.menu ${aliases[0]}\``)
+                .join("\n")
+            : `💙 **HATSUNE MIKU USERBOT** 💙\n\n⚡ .ping\n📋 .menu\n👤 .me\n🗑️ .del`;
+
+          await msg.reply({ message: menuText, parseMode: "markdown" });
+        }
+      }
+
+   
       else if (text === ".me") {
-        const me = await client.getMe();
         await msg.reply({
           message:
             `👤 **Tu información:**\n\n` +
@@ -230,6 +306,7 @@ function startBot() {
         });
       }
 
+     
       else if (text === ".del") {
         if (msg.replyTo) {
           const replied = await msg.getReplyMessage();
@@ -238,14 +315,25 @@ function startBot() {
         await msg.delete({ revoke: true });
       }
 
+
+      else if (text === ".id") {
+        await msg.reply({
+          message: `🆔 Chat ID: \`${chatId}\`\n👤 Tu ID: \`${senderId}\``,
+          parseMode: "markdown",
+        });
+      }
+
     } catch (error) {
       console.error("❌ Error al procesar mensaje:", error.message);
     }
 
-  }, new NewMessage({ outgoing: true }));
+  }, new NewMessage({
+    outgoing: true,  
+    incoming: true,   
+  }));
 
-  console.log("🎧 Escuchando comandos...");
-  console.log("💡 Comandos: .ping | .menu | .me | .del\n");
+  console.log("🎧 Escuchando comandos en todos los chats...");
+  console.log("💡 Comandos built-in: .ping | .menu | .me | .del | .id\n");
 }
 
 process.on("uncaughtException", (err) => {
