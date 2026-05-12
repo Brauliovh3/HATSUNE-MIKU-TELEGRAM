@@ -3,6 +3,8 @@ import { Telegraf, Markup } from 'telegraf';
 import axios from 'axios';
 import fs from 'fs-extra';
 import moment from 'moment-timezone';
+import readline from 'readline';
+import QRCode from 'qrcode';
 import { menuObject, categoryAliases, categoryNames } from './nucleo/commands.js';
 import { categoryImages, mainMenuImage } from './nucleo/menuConfig.js';
 import { initDB } from './nucleo/system/initDB.js';
@@ -296,81 +298,284 @@ function formatUptime(seconds) {
 }
 
 
-console.log(`
-╔════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
-║                                                                                                                              ║
-║  ██╗  ██╗██╗  ██╗██╗     ██╗   ██╗██╗ ██████╗██╗  ██╗███████╗████████╗    ██╗  ██╗███████╗██╗ ██████╗ ██████╗  ║
-║  ██║ ██╔╝██║  ██║██║     ██║   ██║██║██╔════╝██║ ██╔╝██╔════╝╚══██╔══╝    ██║ ██╔╝██╔════╝██║██╔═══██╗██╔══██╗  ║
-║  █████╔╝ ███████║██║     ██║   ██║██║██║     █████╔╝ █████╗     ██║       █████╔╝ █████╗  ██║██║   ██║██████╔╝  ║
-║  ██╔═██╗ ██╔══██║██║     ╚██╗ ██╔╝██║██║     ██╔═██╗ ██╔══╝     ██║       ██╔═██╗ ██╔══╝  ██║██║   ██║██╔══██╗  ║
-║  ██║  ██╗██║  ██║███████╗ ╚████╔╝ ██║╚██████╗██║  ██╗███████╗   ██║       ██║  ██╗███████╗██║╚██████╔╝██║  ██║  ║
-║  ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝  ╚═══╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝   ╚═╝       ╚═╝  ╚═╝╚══════╝╚═╝ ╚═════╝ ╚═╝  ╚═╝  ║
-║                                                                                                                              ║
-║  ██████╗██╗      ██████╗ ██╗   ██╗██████╗      ██████╗██╗   ██╗███████╗████████╗    ██████╗ ███████╗ ██████╗ ██████╗  ║
-║ ██╔════╝██║     ██╔═══██╗██║   ██║██╔══██╗    ██╔════╝██║   ██║██╔════╝╚══██╔══╝    ██╔══██╗██╔════╝██╔═══██╗██╔══██╗  ║
-║ ██║     ██║     ██║   ██║██║   ██║██████╔╝    ██║     ██║   ██║█████╗     ██║       ██║  ██║█████╗  ██║   ██║██████╔╝  ║
-║ ██║     ██║     ██║   ██║██║   ██║██╔══██╗    ██║     ██║   ██║██╔══╝     ██║       ██║  ██║██╔══╝  ██║   ██║██╔══██╗  ║
-║ ╚██████╗███████╗╚██████╔╝╚██████╔╝██║  ██║    ╚██████╗╚██████╔╝███████╗   ██║       ██████╔╝███████╗╚██████╔╝██║  ██║  ║
-║  ╚═════╝╚══════╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═╝     ╚═════╝ ╚═════╝ ╚══════╝   ╚═╝       ╚═════╝ ╚══════╝ ╚═════╝ ╚═╝  ╚═╝  ║
-║                                                                                                                              ║
-║                                    💙 HATSUNE MIKU TELEGRAM BOT 💙                                                              ║
-║                                            🤖 VERSION 1.0.0 🤖                                                               ║
-║                                           👑 CREADO POR DEPOOL 👑                                                             ║
-║                                                                                                                              ║
-╚════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
 
-🚀 Iniciando Hatsune Miku Telegram Bot...`);
-async function waitForLinking() {
-  console.log('\n⏳ Esperando vinculación con Telegram...');
-  console.log('📱 Opciones disponibles:');
-  console.log('   1️⃣ Escanear el código QR con tu cámara de Telegram');
-  console.log('   2️⃣ Enviar el código al bot: /scanqr ' + global.serverQR.serverSession.sessionId);
-  console.log('⏰ Tiempo restante: 10 minutos');
+function showHatsuneMikuBanner() {
+  const banner = `
+╔════════════════════════════════════════════════════════════════╗
+║                                                                ║
+║    ██╗  ██╗ █████╗ ████████╗███████╗██╗   ██╗███╗   ██╗███████╗
+║    ██║  ██║██╔══██╗╚══██╔══╝██╔════╝██║   ██║████╗  ██║██╔════╝
+║    ███████║███████║   ██║   █████╗  ██║   ██║██╔██╗ ██║█████╗  
+║    ██╔══██║██╔══██║   ██║   ██╔══╝  ██║   ██║██║╚██╗██║██╔══╝  
+║    ██║  ██║██║  ██║   ██║   ███████╗╚██████╔╝██║ ╚████║███████╗
+║    ╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝   ╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝
+║                                                                ║
+║    ███╗   ███╗██╗██╗  ██╗██╗   ██║                            ║
+║    ████╗ ████║██║██║ ██╔╝██║   ██║                            ║
+║    ██╔████╔██║██║█████╔╝ ██║   ██║                            ║
+║    ██║╚██╔╝██║██║██╔═██╗ ██║   ██║                            ║
+║    ██║ ╚═╝ ██║██║██║  ██╗╚██████╔╝                            ║
+║    ╚═╝     ╚═╝╚═╝╚═╝  ╚═╝ ╚═════╝                             ║
+║                                                                ║
+║    ████████╗███████╗██╗     ███████╗ ██████╗ ██████╗  █████╗ ███╗   ███╗
+║    ╚══██╔══╝██╔════╝██║     ██╔════╝██╔════╝ ██╔══██╗██╔══██╗████╗ ████║
+║       ██║   █████╗  ██║     █████╗  ██║  ███╗██████╔╝███████║██╔████╔██║
+║       ██║   ██╔══╝  ██║     ██╔══╝  ██║   ██║██╔══██╗██╔══██║██║╚██╔╝██║
+║       ██║   ███████╗███████╗███████╗╚██████╔╝██║  ██║██║  ██║██║ ╚═╝ ██║
+║       ╚═╝   ╚══════╝╚══════╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝
+║                                                                ║
+║                 💙  B O T   T E L E G R A M  💙                ║
+║                    ═══════════════════════                     ║
+║              VERSIÓN 1.0.0  •  CREADO POR DEPOOL               ║
+║                                                                ║
+╚════════════════════════════════════════════════════════════════╝`;
+  console.log(chalkCyan(banner));
+}
+
+
+function chalkCyan(text) {
+  return '\x1b[36m' + text + '\x1b[0m';
+}
+function chalkGreen(text) {
+  return '\x1b[32m' + text + '\x1b[0m';
+}
+function chalkYellow(text) {
+  return '\x1b[33m' + text + '\x1b[0m';
+}
+function chalkRed(text) {
+  return '\x1b[31m' + text + '\x1b[0m';
+}
+function chalkBlue(text) {
+  return '\x1b[34m' + text + '\x1b[0m';
+}
+function chalkMagenta(text) {
+  return '\x1b[35m' + text + '\x1b[0m';
+}
+function bold(text) {
+  return '\x1b[1m' + text + '\x1b[0m';
+}
+
+
+function showLinkMenu() {
+  const sessionId = global.serverQR.serverSession?.sessionId || 'SIN_SESION';
+  const botName = process.env.BOT_NAME || '💙HATSUNE MIKU💙';
   
-  let countdown = 600; 
-  const interval = setInterval(() => {
-    countdown--;
-    const minutes = Math.floor(countdown / 60);
-    const seconds = countdown % 60;
-    
-    if (countdown % 30 === 0) { 
-      console.log(`⏰ Tiempo restante: ${minutes}:${seconds.toString().padStart(2, '0')}`);
-    }
-    
-    if (global.serverQR.isServerLinked()) {
-      clearInterval(interval);
-      console.log('\n✅ ¡Sesión vinculada exitosamente!');
-      console.log(`👤 Usuario vinculado: ${global.serverQR.getLinkedUsers()[0]}`);
-      console.log('🎉 Bot listo para usar en Telegram\n');
-      return true;
-    }
-    
-    if (countdown <= 0) {
-      clearInterval(interval);
-      console.log('\n❌ Tiempo de vinculación expirado');
-      console.log('🔄 Reinicia el servidor para obtener un nuevo código\n');
-      return false;
-    }
-  }, 1000);
+  const menu = `
+${chalkCyan('╔══════════════════════════════════════════╗')}
+${chalkCyan('║')}      ${chalkMagenta(bold('🌸 MENÚ DE VINCULACIÓN 🌸'))}      ${chalkCyan('║')}
+${chalkCyan('╠══════════════════════════════════════════╣')}
+${chalkCyan('║')}                                          ${chalkCyan('║')}
+${chalkCyan('║')}  ${chalkYellow('🤖 Bot:')} ${bold(botName)}              ${chalkCyan('║')}
+${chalkCyan('║')}  ${chalkYellow('🆔 Sesión:')} ${bold(sessionId.slice(0, 20))}...       ${chalkCyan('║')}
+${chalkCyan('║')}                                          ${chalkCyan('║')}
+${chalkCyan('╠══════════════════════════════════════════╣')}
+${chalkCyan('║')}                                          ${chalkCyan('║')}
+${chalkCyan('║')}  ${chalkGreen(bold('   [1] 📋 MOSTRAR CÓDIGO'))}         ${chalkCyan('║')}
+${chalkCyan('║')}       ${chalkYellow('Ver el código de vinculación')}      ${chalkCyan('║')}
+${chalkCyan('║')}                                          ${chalkCyan('║')}
+${chalkCyan('║')}  ${chalkBlue(bold('   [2] 📱 MOSTRAR QR'))}             ${chalkCyan('║')}
+${chalkCyan('║')}       ${chalkYellow('Mostrar código QR para escanear')}   ${chalkCyan('║')}
+${chalkCyan('║')}                                          ${chalkCyan('║')}
+${chalkCyan('╠══════════════════════════════════════════╣')}
+${chalkCyan('║')}  ${chalkYellow('⏰ Válido por 10 minutos')}              ${chalkCyan('║')}
+${chalkCyan('║')}  ${chalkYellow('💡 Escribe 1 o 2 y presiona Enter')}     ${chalkCyan('║')}
+${chalkCyan('╚══════════════════════════════════════════╝')}`;
   
-  return new Promise(resolve => {
-    intervalResolve = resolve;
+  console.log(menu);
+}
+
+function showLinkCode() {
+  const sessionId = global.serverQR.serverSession?.sessionId || 'SIN_SESION';
+  
+  const codeBox = `
+${chalkGreen('╔══════════════════════════════════════════╗')}
+${chalkGreen('║')}     ${chalkMagenta(bold('📋 CÓDIGO DE VINCULACIÓN'))}      ${chalkGreen('║')}
+${chalkGreen('╠══════════════════════════════════════════╣')}
+${chalkGreen('║')}                                          ${chalkGreen('║')}
+${chalkGreen('║')}  ${chalkYellow('Envía este código al bot de Telegram:')}  ${chalkGreen('║')}
+${chalkGreen('║')}                                          ${chalkGreen('║')}
+${chalkGreen('║')}  ${bold(chalkCyan(sessionId))}  ${chalkGreen('║')}
+${chalkGreen('║')}                                          ${chalkGreen('║')}
+${chalkGreen('║')}  ${chalkYellow('📱 Comando:')}                          ${chalkGreen('║')}
+${chalkGreen('║')}  ${bold('/scanqr ' + sessionId)}         ${chalkGreen('║')}
+${chalkGreen('║')}                                          ${chalkGreen('║')}
+${chalkGreen('╚══════════════════════════════════════════╝')}`;
+  
+  console.log(codeBox);
+}
+
+function showLinkQR() {
+  const sessionId = global.serverQR.serverSession?.sessionId || 'SIN_SESION';
+  
+  const qrInfo = `
+${chalkBlue('╔══════════════════════════════════════════╗')}
+${chalkBlue('║')}      ${chalkMagenta(bold('📱 CÓDIGO QR GENERADO'))}        ${chalkBlue('║')}
+${chalkBlue('╠══════════════════════════════════════════╣')}
+${chalkBlue('║')}                                          ${chalkBlue('║')}
+${chalkBlue('║')}  ${chalkYellow('✅ El código QR se ha generado y')}        ${chalkBlue('║')}
+${chalkBlue('║')}  ${chalkYellow('guardado en la carpeta 📁 server_qr/')}    ${chalkBlue('║')}
+${chalkBlue('║')}                                          ${chalkBlue('║')}
+${chalkBlue('║')}  ${chalkYellow('🆔 Sesión:')}                             ${chalkBlue('║')}
+${chalkBlue('║')}  ${bold(sessionId)}  ${chalkBlue('║')}
+${chalkBlue('║')}                                          ${chalkBlue('║')}
+${chalkBlue('║')}  ${chalkYellow('📁 Archivo QR:')}                          ${chalkBlue('║')}
+${chalkBlue('║')}  ${chalkCyan('server_qr/server_' + sessionId + '.png')}   ${chalkBlue('║')}
+${chalkBlue('║')}                                          ${chalkBlue('║')}
+${chalkBlue('╚══════════════════════════════════════════╝')}`;
+  
+  console.log(qrInfo);
+  
+ 
+  try {
+    QRCode.toString(JSON.stringify({
+      type: 'TELEGRAM_SERVER_LINK',
+      sessionId: sessionId,
+      timestamp: Date.now()
+    }), { type: 'terminal', small: true }, (err, qrStr) => {
+      if (!err) {
+        console.log(chalkYellow('\n📱 Escanea este QR con tu cámara de Telegram:\n'));
+        console.log(chalkCyan(qrStr));
+      }
+    });
+  } catch (e) {
+    console.log(chalkRed('\n⚠️  No se pudo mostrar QR en terminal'));
+  }
+}
+
+function startInteractiveLinking() {
+  return new Promise((resolve) => {
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+      terminal: true
+    });
+
+    let menuActive = true;
+    let countdown = 600;
+
+  
+    showHatsuneMikuBanner();
+    
+    console.log(chalkGreen('\n🚀 Iniciando Hatsune Miku Telegram Bot...\n'));
+
+    
+    showLinkMenu();
+
+    // Menú interactivo
+    function promptUser() {
+      rl.question(chalkCyan('\n  👉 Opción (1 o 2): '), (answer) => {
+        answer = answer.trim();
+        
+        if (answer === '1') {
+          console.clear();
+          showHatsuneMikuBanner();
+          showLinkCode();
+          console.log(chalkGreen('\n  ✅ Código generado. Envíalo al bot de Telegram.'));
+          console.log(chalkYellow('  ⏳ Esperando vinculación...\n'));
+          showLinkMenu();
+          
+     
+          if (global.serverQR.isServerLinked()) {
+            console.log(chalkGreen('\n  ✅ ¡Sesión vinculada exitosamente!'));
+            rl.close();
+            menuActive = false;
+            resolve(true);
+            return;
+          }
+          
+          promptUser();
+          
+        } else if (answer === '2') {
+          console.clear();
+          showHatsuneMikuBanner();
+          showLinkQR();
+          
+     
+          const sessionId = global.serverQR.serverSession?.sessionId;
+          if (sessionId) {
+            const qrPath = `./server_qr/server_${sessionId}.png`;
+            console.log(chalkGreen(`\n  📁 QR guardado en: ${qrPath}`));
+            console.log(chalkYellow('  📱 Escanea el QR con tu cámara de Telegram'));
+            console.log(chalkYellow('  ⏳ Esperando vinculación...\n'));
+          }
+          
+          showLinkMenu();
+         
+          if (global.serverQR.isServerLinked()) {
+            console.log(chalkGreen('\n  ✅ ¡Sesión vinculada exitosamente!'));
+            rl.close();
+            menuActive = false;
+            resolve(true);
+            return;
+          }
+          
+          promptUser();
+          
+        } else if (answer.toLowerCase() === 'exit' || answer.toLowerCase() === 'salir' || answer === '3') {
+          console.log(chalkRed('\n  ❌ Saliendo del menú de vinculación...\n'));
+          rl.close();
+          menuActive = false;
+          resolve(false);
+        } else {
+          console.log(chalkRed('\n  ⚠️  Opción inválida. Escribe 1 para CÓDIGO o 2 para QR.'));
+          promptUser();
+        }
+      });
+    }
+
+  
+    const interval = setInterval(() => {
+      countdown--;
+      const minutes = Math.floor(countdown / 60);
+      const seconds = countdown % 60;
+      
+      if (countdown % 30 === 0 && menuActive) {
+        console.log(chalkYellow(`\n  ⏰ Tiempo restante: ${minutes}:${seconds.toString().padStart(2, '0')}`));
+      }
+      
+      if (global.serverQR.isServerLinked()) {
+        clearInterval(interval);
+        if (menuActive) {
+          console.log(chalkGreen('\n  ✅ ¡Sesión vinculada exitosamente!'));
+          console.log(chalkGreen(`  👤 Usuario vinculado: ${global.serverQR.getLinkedUsers()[0]}`));
+          console.log(chalkGreen('  🎉 Bot listo para usar en Telegram\n'));
+          rl.close();
+          menuActive = false;
+        }
+        resolve(true);
+        return;
+      }
+      
+      if (countdown <= 0) {
+        clearInterval(interval);
+        if (menuActive) {
+          console.log(chalkRed('\n  ❌ Tiempo de vinculación expirado'));
+          console.log(chalkRed('  🔄 Reinicia el servidor para obtener un nuevo código\n'));
+          rl.close();
+          menuActive = false;
+        }
+        resolve(false);
+      }
+    }, 1000);
+
+
+    promptUser();
   });
 }
 
 bot.launch()
   .then(async () => {
-    console.log('\n✅ Bot iniciado exitosamente!');
-    console.log(`🤖 Bot: @${bot.botInfo.username}`);
-    console.log(`👤 Owner: ${global.owner.join(', ')}`);
+    console.log('\n' + chalkGreen('✅ Bot iniciado exitosamente!'));
+    console.log(chalkGreen(`🤖 Bot: @${bot.botInfo.username}`));
+    console.log(chalkGreen(`👤 Owner: ${global.owner.join(', ')}`));
     
-  
-    await waitForLinking();
     
-    console.log('🎉 Hatsune Miku Bot está completamente operativo!');
+    await startInteractiveLinking();
+    
+    console.log(chalkMagenta('\n🎉 Hatsune Miku Bot está completamente operativo!'));
   })
   .catch(err => {
-    console.error('❌ Error al iniciar el bot:', err);
+    console.error(chalkRed('❌ Error al iniciar el bot:'), err);
     process.exit(1);
   });
 
@@ -379,6 +584,5 @@ process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));
 
 }
-
 
 initializeBot().catch(console.error);
