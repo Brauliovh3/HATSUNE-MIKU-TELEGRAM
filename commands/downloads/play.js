@@ -13,22 +13,6 @@ export default {
     }
 
     const query = args.join(' ');
-    const userId = ctx.senderId;
-    
-
-    if (!global.db.data) {
-      global.db.data = { users: {}, chats: {}, settings: {}, cooldowns: {} };
-    }
-    if (!global.db.data.users) {
-      global.db.data.users = {};
-    }
-    
-    const user = global.db.data.users[userId] || { coins: 0 };
-    
-    const cost = 10;
-    if ((user?.coins || 0) < cost) {
-      return ctx.reply(`❌ No tienes suficientes 🌱 Cebollines\n💰 Costo: ${cost} 🌱 Cebollines\n📊 Tienes: ${user?.coins || 0} 🌱 Cebollines`);
-    }
 
     try {
       await ctx.reply('🔍 *Buscando en YouTube...*');
@@ -55,9 +39,9 @@ export default {
 ⏱️ *Duración:* ${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}
 👁️ *Vistas:* ${parseInt(videoInfo.videoDetails.viewCount).toLocaleString()}
 
-🔘 *Selecciona formato:*
-🎵 *Audio MP3* - 10 🌱 Cebollines
-🎥 *Video MP4* - 15 🌱 Cebollines`;
+🔘 *Formatos disponibles:*
+🎵 *Audio MP3*
+🎥 *Video MP4*`;
 
       await ctx.client.sendFile(ctx.chatId, {
         file: thumbnail,

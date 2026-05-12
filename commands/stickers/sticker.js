@@ -6,12 +6,8 @@ export default {
   cooldown: 3,
   async run(ctx, args) {
     try {
-      
-      await ctx.reply('🔍 *Procesando imagen...*');
-      
       const msg = ctx.message;
       let imageBuffer = null;
-      let fileName = `sticker_${Date.now()}.webp`;
 
       if (msg.replyTo) {
         const repliedMsg = await msg.replyTo;
@@ -53,17 +49,11 @@ export default {
         return ctx.reply('📸 *USO:* Responde a una imagen o envía una imagen con el comando\n📝 *Ejemplo:* .s (respondiendo a una imagen)');
       }
 
-      await ctx.reply('⚡ *Creando sticker...*');
-      
+      // Send as document (sticker format)
       await ctx.client.sendFile(ctx.chatId, {
         file: imageBuffer,
-        fileName: fileName,
-        forceDocument: false,
-        attributes: [{
-          _: 'documentAttributeImageSize',
-          w: 512,
-          h: 512
-        }]
+        mimeType: 'image/webp',
+        caption: '✅ Sticker creado'
       });
 
     } catch (error) {
