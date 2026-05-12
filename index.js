@@ -12,7 +12,6 @@ dotenv.config();
 const apiId = parseInt(process.env.API_ID);
 const apiHash = process.env.API_HASH;
 
-
 let sessionString = "";
 let sessionData = null;
 
@@ -31,7 +30,6 @@ if (fs.existsSync("./session.txt")) {
     }
   }
 }
-
 
 const client = new TelegramClient(
   new StringSession(sessionString),
@@ -187,18 +185,57 @@ async function qrLoginFlow() {
         }
       } catch (e) {
         if (e.message?.includes("TOKEN_EXPIRED") || e.message?.includes("EXPIRED")) {
-          console.log("\n⏰ Token expirado.");
+          console.log("\n⏰ Token expirado. Verificando si la sesión quedó activa...");
+
+         
+          try {
+            await new Promise((r) => setTimeout(r, 1500));
+            const me = await client.getMe();
+
+            if (me && me.id) {
+              console.log(`✅ ¡Sesión activa detectada!`);
+              console.log(`👤 Usuario: ${me.firstName}`);
+
+              const session = client.session.save();
+              fs.writeFileSync("./session.txt", session);
+
+              const data = {
+                session,
+                userId: me.id?.toString(),
+                firstName: me.firstName,
+                lastName: me.lastName,
+                username: me.username,
+                phone: me.phone,
+                created: new Date().toISOString(),
+              };
+
+              if (!fs.existsSync("./sessions")) fs.mkdirSync("./sessions");
+              const sessionName = `session_${Date.now()}`;
+              fs.writeFileSync(`./sessions/${sessionName}.txt`, session);
+              fs.writeFileSync(`./sessions/${sessionName}.json`, JSON.stringify(data, null, 2));
+              fs.writeFileSync("./session.json", JSON.stringify(data, null, 2));
+
+              console.log("💾 Sesión guardada correctamente\n");
+              escaneado = true;
+              startBot();
+              return;
+            }
+          } catch (meError) {
+            console.log("❌ No se pudo verificar la sesión:", meError.message);
+          }
+
           break;
         } else if (e.message?.includes("SESSION_PASSWORD_NEEDED")) {
           console.log("\n🔐 Se requiere contraseña 2FA");
-         
+          const password = await input.text("🔐 Contraseña 2FA: ");
+          
           break;
         }
       }
     }
 
     if (!escaneado) {
-      console.log("\n❌ No se pudo escanear el QR a tiempo.");
+      console.log("\n❌ No se pudo completar el login por QR.");
       const retry = await input.text("¿Usar login por código en su lugar? (s/n): ");
       if (retry.toLowerCase() === "s") {
         await phoneLoginFlow();
@@ -219,7 +256,7 @@ function startBot() {
   console.log("🟢 USERBOT ONLINE");
   console.log("=================================\n");
 
- 
+  
   client.addEventHandler(async (event) => {
     const msg = event.message;
 
@@ -265,13 +302,12 @@ function startBot() {
       console.error("❌ Error al procesar mensaje:", error.message);
     }
 
- 
+  
   }, new NewMessage({ outgoing: true }));
 
   console.log("🎧 Escuchando comandos...");
   console.log("💡 Comandos: .ping | .menu | .me | .del\n");
 }
-
 
 process.on("uncaughtException", (err) => {
   console.error("💥 Error no capturado:", err.message);
