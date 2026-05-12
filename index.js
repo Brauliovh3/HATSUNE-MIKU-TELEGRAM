@@ -264,83 +264,7 @@ async function startBot() {
     }
 
    
-    try {
-
    
-      if (text === ".ping") {
-        const start = Date.now();
-        const sent = await msg.reply({ message: "🏓 calculando..." });
-        const ms = Date.now() - start;
-        await client.editMessage(chatId, {
-          message: sent.id,
-          text: `🏓 Pong! \`${ms}ms\``,
-          parseMode: "markdown",
-        });
-      }
-
-     
-      else if (text.startsWith(".menu")) {
-        const parts = text.split(" ");
-        const catArg = parts[1]?.toLowerCase();
-
-        if (catArg && menuData) {
-          
-          let found = null;
-          for (const [cat, aliases] of Object.entries(menuData.categoryAliases)) {
-            if (aliases.includes(catArg)) { found = cat; break; }
-          }
-          if (found && menuData.menuObject[found]) {
-            await msg.reply({ message: menuData.menuObject[found] });
-          } else {
-            await msg.reply({ message: `❌ Categoría no encontrada.\nUsa: .menu <categoria>\nCategorías: ${Object.keys(menuData.categoryAliases).join(", ")}` });
-          }
-        } else {
-          
-          const menuText = menuData
-            ? `💙 **HATSUNE MIKU USERBOT** 💙\n\n` +
-              `Usa \`.menu <categoría>\` para ver comandos:\n\n` +
-              Object.entries(menuData.categoryAliases)
-                .map(([cat, aliases]) => `• \`.menu ${aliases[0]}\``)
-                .join("\n")
-            : `💙 **HATSUNE MIKU USERBOT** 💙\n\n⚡ .ping\n📋 .menu\n👤 .me\n🗑️ .del`;
-
-          await msg.reply({ message: menuText, parseMode: "markdown" });
-        }
-      }
-
-   
-      else if (text === ".me") {
-        await msg.reply({
-          message:
-            `👤 **Tu información:**\n\n` +
-            `🆔 ID: \`${me.id}\`\n` +
-            `👤 Nombre: ${me.firstName} ${me.lastName || ""}\n` +
-            `🔖 Username: @${me.username || "sin username"}\n` +
-            `📱 Teléfono: +${me.phone}`,
-          parseMode: "markdown",
-        });
-      }
-
-     
-      else if (text === ".del") {
-        if (msg.replyTo) {
-          const replied = await msg.getReplyMessage();
-          if (replied) await replied.delete({ revoke: true });
-        }
-        await msg.delete({ revoke: true });
-      }
-
-
-      else if (text === ".id") {
-        await msg.reply({
-          message: `🆔 Chat ID: \`${chatId}\`\n👤 Tu ID: \`${senderId}\``,
-          parseMode: "markdown",
-        });
-      }
-
-    } catch (error) {
-      console.error("❌ Error al procesar mensaje:", error.message);
-    }
 
   }, new NewMessage({
     outgoing: true,  
@@ -348,7 +272,7 @@ async function startBot() {
   }));
 
   console.log("🎧 Escuchando comandos en todos los chats...");
-  console.log("💡 Comandos built-in: .ping | .menu | .me | .del | .id\n");
+  console.log("💡 Todos los comandos están cargados desde carpetas\n");
 }
 
 process.on("uncaughtException", (err) => {

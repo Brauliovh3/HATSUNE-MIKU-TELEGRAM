@@ -5,15 +5,16 @@ export default {
   command: ['play'],
   category: 'downloads',
   description: 'Descargar música o video de YouTube',
+  middlewares: [],
+  cooldown: 5,
   async run(ctx, args) {
     if (!args || args.length === 0) {
-      return ctx.reply('🎵 *USO:* /play <título o URL de YouTube>\n📝 *Ejemplo:* /play Despacito');
+      return ctx.reply('🎵 *USO:* .play <título o URL de YouTube>\n📝 *Ejemplo:* .play Despacito');
     }
 
     const query = args.join(' ');
-    const userId = ctx.from.id.toString();
-    const user = global.db.data.users[userId];
-    
+    const userId = ctx.senderId;
+    const user = global.db.data?.users?.[userId];
     
     const cost = 10;
     if ((user?.coins || 0) < cost) {
@@ -23,15 +24,11 @@ export default {
     try {
       await ctx.reply('🔍 *Buscando en YouTube...*');
 
-      
-      const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&key=TU_API_KEY_YOUTUBE`;
-      
       let videoInfo;
       if (query.includes('youtube.com/watch?v=')) {
         const videoId = query.split('v=')[1]?.split('&')[0];
         videoInfo = await ytdl.getInfo(`https://www.youtube.com/watch?v=${videoId}`);
       } else {
-        
         videoInfo = await ytdl.getInfo(query);
       }
 
@@ -43,7 +40,6 @@ export default {
       const duration = videoInfo.videoDetails.lengthSeconds;
       const thumbnail = videoInfo.videoDetails.thumbnails[0]?.url;
 
-      
       const message = `🎵 *VIDEO ENCONTRADO* 🎵
 
 📝 *Título:* ${title}
@@ -54,15 +50,10 @@ export default {
 🎵 *Audio MP3* - 10 🌱 Cebollines
 🎥 *Video MP4* - 15 🌱 Cebollines`;
 
-      await ctx.replyWithPhoto(thumbnail, {
+      await ctx.client.sendFile(ctx.chatId, {
+        file: thumbnail,
         caption: message,
-        parse_mode: 'Markdown',
-        ...Markup.inlineKeyboard([
-          [
-            Markup.button.callback('🎵 AUDIO MP3', `youtube_audio_${videoInfo.videoDetails.videoId}`),
-            Markup.button.callback('🎥 VIDEO MP4', `youtube_video_${videoInfo.videoDetails.videoId}`)
-          ]
-        ])
+        parseMode: 'markdown'
       });
 
     } catch (error) {
