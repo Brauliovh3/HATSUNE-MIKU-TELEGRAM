@@ -64,16 +64,10 @@ export default {
         
         const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
         
-        const message = `🎵 *VIDEO ENCONTRADO* 🎵
-
-📝 *Título:* ${title}
-🆔 *ID:* ${videoId}
-
-📥 *Elige formato para descargar:*`;
-
-       
-        await ctx.client.sendMessage(ctx.chatId, {
-          message: `🎵 *VIDEO ENCONTRADO* 🎵
+        
+        await ctx.client.sendFile(ctx.chatId, {
+          file: thumbnailUrl,
+          caption: `🎵 *VIDEO ENCONTRADO* 🎵
 
 📝 *Título:* ${title}
 🆔 *ID:* ${videoId}
@@ -83,14 +77,58 @@ export default {
           buttons: [
             [
               {
-                text: '🎵 Descargar Audio MP3',
+                text: '🎵 Audio MP3',
                 data: Buffer.from(`audio_${videoId}`)
+              },
+              {
+                text: '🎥 Video MP4',
+                data: Buffer.from(`video_${videoId}`)
               }
             ],
             [
               {
-                text: '🎥 Descargar Video MP4',
-                data: Buffer.from(`video_${videoId}`)
+                text: '🎼 Audio WAV',
+                data: Buffer.from(`wav_${videoId}`)
+              },
+              {
+                text: '🎬 Video AVI',
+                data: Buffer.from(`avi_${videoId}`)
+              }
+            ],
+            [
+              {
+                text: '📹 Video MOV',
+                data: Buffer.from(`mov_${videoId}`)
+              },
+              {
+                text: '🎞️ Video MKV',
+                data: Buffer.from(`mkv_${videoId}`)
+              },
+              {
+                text: '🎧 Audio FLAC',
+                data: Buffer.from(`flac_${videoId}`)
+              },
+              {
+                text: '🎵 Audio AAC',
+                data: Buffer.from(`aac_${videoId}`)
+              }
+            ],
+            [
+              {
+                text: '📽️ Video WEBM',
+                data: Buffer.from(`webm_${videoId}`)
+              },
+              {
+                text: '🎥 Video 3GP',
+                data: Buffer.from(`3gp_${videoId}`)
+              },
+              {
+                text: '🎵 Audio OGG',
+                data: Buffer.from(`ogg_${videoId}`)
+              },
+              {
+                text: '🎥 Video M4V',
+                data: Buffer.from(`m4v_${videoId}`)
               }
             ]
           ]
@@ -98,6 +136,7 @@ export default {
         
         setTimeout(() => {
           try {
+          
             fs.unlinkSync(thumbnailPath);
           } catch (e) {
             
@@ -138,22 +177,47 @@ export default {
     try {
       const data = callbackData.toString();
       
-      if (data.startsWith('audio_')) {
-        const actualVideoId = data.replace('audio_', '');
+      const formats = {
+        'audio': { name: 'Audio MP3', api: 'ytmp3' },
+        'video': { name: 'Video MP4', api: 'ytmp4' },
+        'wav': { name: 'Audio WAV', api: 'ytmp3' },
+        'avi': { name: 'Video AVI', api: 'ytmp4' },
+        'mov': { name: 'Video MOV', api: 'ytmp4' },
+        'mkv': { name: 'Video MKV', api: 'ytmp4' },
+        'flac': { name: 'Audio FLAC', api: 'ytmp3' },
+        'aac': { name: 'Audio AAC', api: 'ytmp3' },
+        'webm': { name: 'Video WEBM', api: 'ytmp4' },
+        '3gp': { name: 'Video 3GP', api: 'ytmp4' },
+        'ogg': { name: 'Audio OGG', api: 'ytmp3' },
+        'm4v': { name: 'Video M4V', api: 'ytmp4' }
+      };
+      
+      let formatFound = null;
+      let actualVideoId = null;
+      
+      for (const [format, info] of Object.entries(formats)) {
+        if (data.startsWith(`${format}_`)) {
+          formatFound = format;
+          actualVideoId = data.replace(`${format}_`, '');
+          break;
+        }
+      }
+      
+      if (formatFound && formats[formatFound]) {
+        const formatInfo = formats[formatFound];
         
         await ctx.answerCallbackQuery({
-          text: `⏳ *Preparando descarga de Audio MP3...*`,
+          text: `⏳ *Preparando descarga de ${formatInfo.name}...*`,
           showAlert: true
         });
 
-        const apiUrl = `${process.env.YOUTUBE_API_URL}/dl/ytmp3?url=https://youtu.be/${actualVideoId}&key=${process.env.YOUTUBE_API_KEY}`;
+        const apiUrl = `${process.env.YOUTUBE_API_URL}/dl/${formatInfo.api}?url=https://youtu.be/${actualVideoId}&key=${process.env.YOUTUBE_API_KEY}`;
         
         const apiResponse = await axios.get(apiUrl);
         
         if (apiResponse.data.status && apiResponse.data.data) {
           const downloadUrl = apiResponse.data.data.dl;
           const fileName = apiResponse.data.data.fileName;
-          
           
           const fileResponse = await axios.get(downloadUrl, {
             responseType: 'stream'
@@ -168,13 +232,13 @@ export default {
             fileWriter.on('error', reject);
           });
           
-         
+          // Reply to original message
           await ctx.client.sendFile(ctx.chatId, {
             file: filePath,
-            caption: `✅ *${format === 'audio' ? 'Audio MP3' : 'Video MP4'} descargado*`
+            caption: `✅ *${formatInfo.name} descargado*`,
+            replyTo: ctx.message
           });
           
-         
           setTimeout(() => {
             try {
               fs.unlinkSync(filePath);
@@ -185,10 +249,15 @@ export default {
           
         } else {
           await ctx.answerCallbackQuery({
-            text: '❌ Error al obtener enlace de descarga',
+            text: `❌ Error al obtener enlace de descarga para ${formatInfo.name}`,
             showAlert: true
           });
         }
+      } else {
+        await ctx.answerCallbackQuery({
+          text: '❌ Error al obtener enlace de descarga',
+          showAlert: true
+        });
       }
     } catch (error) {
       console.error('Error en callback:', error);
