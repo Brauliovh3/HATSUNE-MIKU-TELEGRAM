@@ -10,8 +10,17 @@ export default {
     }
 
     const url = args[0];
-    const userId = ctx.from.id.toString();
-    const user = global.db.data.users[userId];
+    const userId = ctx.senderId;
+    
+    // Ensure database is initialized
+    if (!global.db.data) {
+      global.db.data = { users: {}, chats: {}, settings: {}, cooldowns: {} };
+    }
+    if (!global.db.data.users) {
+      global.db.data.users = {};
+    }
+    
+    const user = global.db.data.users[userId] || { coins: 0 };
     
    
     const cost = 8;

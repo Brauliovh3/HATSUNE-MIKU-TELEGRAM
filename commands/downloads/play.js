@@ -14,7 +14,16 @@ export default {
 
     const query = args.join(' ');
     const userId = ctx.senderId;
-    const user = global.db.data?.users?.[userId];
+    
+
+    if (!global.db.data) {
+      global.db.data = { users: {}, chats: {}, settings: {}, cooldowns: {} };
+    }
+    if (!global.db.data.users) {
+      global.db.data.users = {};
+    }
+    
+    const user = global.db.data.users[userId] || { coins: 0 };
     
     const cost = 10;
     if ((user?.coins || 0) < cost) {
