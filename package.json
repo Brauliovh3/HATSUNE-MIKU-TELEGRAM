@@ -1,0 +1,33 @@
+{
+  "name": "hatsune-miku-telegram",
+  "version": "1.0.0",
+  "description": "Bot de Telegram Hatsune Miku con todas las funcionalidades del bot de WhatsApp",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "keywords": ["telegram", "bot", "hatsune-miku", "miku"],
+  "author": "DEPOOL",
+  "license": "MIT",
+  "dependencies": {
+    "telegraf": "^4.16.3",
+    "axios": "^1.6.8",
+    "fs-extra": "^11.2.0",
+    "moment-timezone": "^0.5.45",
+    "ytdl-core": "^4.11.5",
+    "yt-search": "^2.10.4",
+    "qrcode": "^1.5.3",
+    "qrcode-terminal": "^0.12.0",
+    "sharp": "^0.33.2",
+    "fluent-ffmpeg": "^2.1.2",
+    "tiktok-scraper": "^1.4.4",
+    "cheerio": "^1.0.0-rc.12",
+    "crypto": "^1.0.1",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}
