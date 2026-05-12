@@ -2,21 +2,24 @@ import { TelegramClient } from "telegram";
 import { StringSession } from "telegram/sessions/index.js";
 import { Api } from "telegram";
 import QRCode from "qrcode";
+import input from "input";
 import fs from "fs";
+
+
 
 const apiId = 37036231;
 const apiHash = "bad9b8fce29127e133f533dc5b50e66b";
 
 
 
-let sessionData = "";
+let sessionString = "";
 
 if (fs.existsSync("./session.txt")) {
-  sessionData = fs.readFileSync("./session.txt", "utf8");
+  sessionString = fs.readFileSync("./session.txt", "utf8");
 }
 
 const client = new TelegramClient(
-  new StringSession(sessionData),
+  new StringSession(sessionString),
   apiId,
   apiHash,
   {
@@ -28,98 +31,145 @@ const client = new TelegramClient(
 
 await client.connect();
 
-console.log("✅ Conectado a Telegram");
+console.log("=================================");
+console.log("💙 HATSUNE MIKU USERBOT 💙");
+console.log("=================================\n");
 
 
-if (sessionData && sessionData.length > 5) {
-  console.log("💾 Sesión encontrada");
-  console.log("🤖 Userbot activo");
+
+if (sessionString.length > 5) {
+
+  console.log("✅ Sesión encontrada");
+  console.log("🤖 Userbot conectado");
 
   startBot();
 
 } else {
 
-  console.log("📲 Generando QR Login...");
+  console.log("1 => Login por código");
+  console.log("2 => Login por QR\n");
 
- 
-
-  const result = await client.invoke(
-    new Api.auth.ExportLoginToken({
-      apiId,
-      apiHash,
-      exceptIds: [],
-    })
-  );
+  const option = await input.text("Selecciona opción: ");
 
 
+  if (option === "1") {
 
-  const token = result.token.toString("base64url");
+    await client.start({
 
-  const qr = `tg://login?token=${token}`;
+      phoneNumber: async () =>
+        await input.text("📱 Número Telegram: "),
+
+      password: async () =>
+        await input.text("🔐 Contraseña 2FA: "),
+
+      phoneCode: async () =>
+        await input.text("💬 Código Telegram: "),
+
+      onError: (err) => console.log(err),
+
+    });
+
+    const session = client.session.save();
+
+    fs.writeFileSync("./session.txt", session);
+
+    console.log("✅ Login exitoso");
+    console.log("💾 Sesión guardada");
+
+    startBot();
+
+  }
+
+
+
+  else if (option === "2") {
+
+    console.log("📲 Generando QR Login...\n");
+
+    const result = await client.invoke(
+      new Api.auth.ExportLoginToken({
+        apiId,
+        apiHash,
+        exceptIds: [],
+      })
+    );
+
+    const token = result.token.toString("base64url");
+
+    const qr = `tg://login?token=${token}`;
+
+   
+
+    const qrTerminal = await QRCode.toString(qr, {
+      type: "terminal",
+      small: true,
+    });
+
+    console.log(qrTerminal);
 
   
 
-  const qrTerminal = await QRCode.toString(qr, {
-    type: "terminal",
-    small: true,
-  });
+    await QRCode.toFile("./telegram-qr.png", qr);
 
-  console.log(qrTerminal);
+    console.log("📁 QR guardado: telegram-qr.png");
+    console.log("📱 Escanea desde Telegram");
+    console.log("Settings > Devices > Link Desktop Device\n");
 
+    let autorizado = false;
 
+   
 
-  await QRCode.toFile("./telegram-qr.png", qr);
+    while (!autorizado) {
 
-  console.log("📁 QR guardado: telegram-qr.png");
-  console.log("📱 Escanea desde Telegram");
-  console.log("Telegram > Settings > Devices > Link Desktop Device");
+      await new Promise((r) => setTimeout(r, 3000));
 
+      try {
 
+        const loginResult = await client.invoke(
+          new Api.auth.ImportLoginToken({
+            token: result.token,
+          })
+        );
 
-  let autorizado = false;
+        if (loginResult instanceof Api.auth.LoginTokenSuccess) {
 
-  while (!autorizado) {
+          autorizado = true;
 
-    await new Promise((r) => setTimeout(r, 5000));
+          console.log("✅ QR Escaneado");
 
-    try {
+          const session = client.session.save();
 
-      const loginResult = await client.invoke(
-        new Api.auth.ExportLoginToken({
-          apiId,
-          apiHash,
-          exceptIds: [],
-        })
-      );
+          fs.writeFileSync("./session.txt", session);
 
+          console.log("💾 Sesión guardada");
 
-      if (loginResult instanceof Api.auth.LoginTokenSuccess) {
+          startBot();
 
-        autorizado = true;
+        }
 
-        console.log("✅ QR Escaneado");
+      } catch (e) {
 
-        const session = client.session.save();
-
-        fs.writeFileSync("./session.txt", session);
-
-        console.log("💾 Sesión guardada");
-
-        startBot();
+        console.log("⌛ Esperando escaneo...");
 
       }
-
-    } catch (e) {
-      console.log("⚠️ Esperando escaneo...");
     }
+
+  } else {
+
+    console.log("❌ Opción inválida");
+    process.exit(0);
+
   }
+
 }
 
 
 
 function startBot() {
 
-  console.log("🤖 HATSUNE MIKU USERBOT ONLINE");
+  console.log("\n=================================");
+  console.log("🤖 USERBOT ONLINE");
+  console.log("=================================\n");
 
   client.addEventHandler(async (event) => {
 
@@ -142,7 +192,6 @@ function startBot() {
     }
 
   
-
     if (text === ".menu") {
 
       await client.sendMessage(msg.chatId, {
@@ -159,7 +208,6 @@ function startBot() {
   });
 
 }
-
 
 
 process.on("uncaughtException", console.error);
