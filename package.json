@@ -1,10 +1,11 @@
 {
-  "name": "telegram-userbot",
+  "name": "telegram-qr-userbot",
   "version": "1.0.0",
   "type": "module",
   "main": "index.js",
   "dependencies": {
-    "telegram": "^2.26.8",
+    "telegram": "^2.26.21",
+    "qrcode": "^1.5.4",
     "input": "^1.0.1"
-
   }
+}
