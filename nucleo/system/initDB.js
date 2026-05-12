@@ -1,3 +1,5 @@
+import fs from 'fs';
+
 let isNumber = (x) => typeof x === 'number' && !isNaN(x)
 
 function initDB(ctx) {
@@ -89,12 +91,22 @@ function saveDatabase() {
 
 function loadDatabase() {
   try {
+   
+    if (!global.db) {
+      global.db = {};
+    }
+    
     if (fs.existsSync('./database.json')) {
       const data = fs.readFileSync('./database.json', 'utf8')
       global.db.data = JSON.parse(data)
+    } else {
+      global.db.data = { users: {}, chats: {}, settings: {}, subbots: {} }
     }
   } catch (error) {
     console.error('Error loading database:', error)
+    if (!global.db) {
+      global.db = {};
+    }
     global.db.data = { users: {}, chats: {}, settings: {}, subbots: {} }
   }
 }
