@@ -20,11 +20,7 @@
     "yt-search": "^2.10.4",
     "qrcode": "^1.5.3",
     "qrcode-terminal": "^0.12.0",
-    "sharp": "^0.33.2",
-    "fluent-ffmpeg": "^2.1.2",
-    "tiktok-scraper": "^1.4.4",
     "cheerio": "^1.0.0-rc.12",
-    "crypto": "^1.0.1",
     "node-fetch": "^3.3.2"
   },
   "devDependencies": {
