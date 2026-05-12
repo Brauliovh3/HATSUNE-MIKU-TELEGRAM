@@ -1,133 +1,82 @@
-import dotenv from 'dotenv'
-import { Telegraf } from 'telegraf'
-import serverQR from './nucleo/system/serverQR.js'
+import { TelegramClient } from "telegram";
+import { StringSession } from "telegram/sessions/index.js";
+import input from "input";
+import fs from "fs";
 
-dotenv.config()
+const apiId = 37036231;
+const apiHash = "bad9b8fce29127e133f533dc5b50e66b";
 
-const token = process.env.BOT_TOKEN
 
-if (!token) {
-  console.log('❌ Falta BOT_TOKEN en el archivo .env')
-  process.exit(1)
+
+let sessionString = "";
+
+if (fs.existsSync("./session.txt")) {
+  sessionString = fs.readFileSync("./session.txt", "utf8");
 }
 
-const bot = new Telegraf(token)
-
-
-
-const botInfo = {
-  name: 'Hatsune Miku Bot',
-  version: '1.0.0',
-  platform: 'Telegram'
-}
-
-const qrData = await serverQR.generateServerQR(botInfo)
-
-const sessionId = serverQR.serverSession.sessionId
-
-await serverQR.saveQRToFile(qrData, sessionId)
-
-
-
-bot.command('scanqr', async (ctx) => {
-  try {
-    const args = ctx.message.text.split(' ').slice(1)
-    const code = args[0]
-
-    if (!code) {
-      return ctx.reply(
-        `❌ Uso incorrecto\n\n📲 Ejemplo:\n/scanqr ${sessionId}`
-      )
-    }
-
-    const result = serverQR.scanServerQR(
-      code,
-      ctx.from.id.toString(),
-      {
-        username: ctx.from.username || '',
-        first_name: ctx.from.first_name || ''
-      }
-    )
-
-    if (!result.success) {
-      return ctx.reply(`❌ ${result.error || 'QR inválido'}`)
-    }
-
-    await ctx.reply(
-      `✅ Sesión vinculada correctamente\n\n🤖 El bot ya puede operar`
-    )
-
-    console.log(
-      `✅ Usuario vinculado: ${
-        ctx.from.username || ctx.from.first_name
-      }`
-    )
-
-  } catch (e) {
-    console.log(e)
-    ctx.reply('❌ Error al vincular sesión')
+const client = new TelegramClient(
+  new StringSession(sessionString),
+  apiId,
+  apiHash,
+  {
+    connectionRetries: 5,
   }
-})
+);
+
+
+await client.start({
+  phoneNumber: async () =>
+    await input.text("📱 Número Telegram: "),
+
+  password: async () =>
+    await input.text("🔐 Contraseña 2FA: "),
+
+  phoneCode: async () =>
+    await input.text("💬 Código Telegram: "),
+
+  onError: (err) => console.log(err),
+});
 
 
 
-bot.start(async (ctx) => {
-  await ctx.reply(`
-💙 Hatsune Miku Bot Activo
+const session = client.session.save();
 
-📲 Para vincular sesión:
+fs.writeFileSync("./session.txt", session);
 
-/scanqr ${sessionId}
-`)
-})
+console.log("✅ Userbot conectado");
+console.log("💾 Sesión guardada");
 
 
 
-bot.command('ping', async (ctx) => {
-  const start = Date.now()
+client.addEventHandler(async (event) => {
+  const message = event.message;
 
-  const msg = await ctx.reply('🏓 Pong')
+  if (!message || !message.message) return;
 
-  const speed = Date.now() - start
+  const text = message.message;
 
-  await ctx.telegram.editMessageText(
-    msg.chat.id,
-    msg.message_id,
-    null,
-    `🏓 Pong\n⚡ ${speed}ms`
-  )
-})
+  console.log("📩", text);
 
 
 
-bot.catch((err) => {
-  console.log('❌ Error Telegram:', err)
-})
+  if (text === ".ping") {
+    await client.sendMessage(message.chatId, {
+      message: "🏓 Pong",
+    });
+  }
 
 
 
-bot.launch()
-  .then(() => {
-    console.log('✅ Bot iniciado correctamente')
-    console.log(`🤖 ${bot.botInfo.username}`)
-    console.log(`🆔 Session ID: ${sessionId}`)
-    console.log(`📁 QR generado: server_qr/server_${sessionId}.png`)
-    console.log(`📲 Vincular usando:`)
-    console.log(`/scanqr ${sessionId}`)
-  })
-  .catch((err) => {
-    console.log('❌ Error al iniciar bot')
-    console.log(err.message)
-  })
+  if (text === ".menu") {
+    await client.sendMessage(message.chatId, {
+      message: `
+💙 HATSUNE MIKU USERBOT 💙
 
+⚡ .ping
+📋 .menu
+`,
+    });
+  }
+});
 
-
-process.once('SIGINT', () => {
-  bot.stop('SIGINT')
-  process.exit(0)
-})
-
-process.once('SIGTERM', () => {
-  bot.stop('SIGTERM')
-  process.exit(0)
-})
+console.log("🤖 Sistema iniciado");
