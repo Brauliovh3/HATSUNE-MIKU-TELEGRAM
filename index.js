@@ -4,11 +4,14 @@ import { Api } from "telegram";
 import QRCode from "qrcode";
 import input from "input";
 import fs from "fs";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 
 
-const apiId = 37036231;
-const apiHash = "bad9b8fce29127e133f533dc5b50e66b";
+const apiId = parseInt(process.env.API_ID);
+const apiHash = process.env.API_HASH;
 
 
 
