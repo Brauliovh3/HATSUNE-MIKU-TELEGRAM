@@ -293,6 +293,44 @@ async function startBot() {
     incoming: true,   
   }));
 
+  
+  client.addEventHandler(async (event) => {
+    const callbackQuery = event.callbackQuery;
+    if (!callbackQuery) return;
+
+    const data = callbackQuery.data;
+    if (!data) return;
+
+    
+    for (const [cmdName, cmd] of global.commands) {
+      if (cmd.callback && typeof cmd.callback === 'function') {
+        try {
+          const ctx = {
+            client,
+            callbackQuery,
+            chatId: callbackQuery.chatId,
+            senderId: callbackQuery.senderId,
+            answerCallbackQuery: async (options) => {
+              if (typeof options === 'string') {
+                return await callbackQuery.answer({ message: options });
+              }
+              return await callbackQuery.answer(options);
+            }
+          };
+          
+          await cmd.callback(ctx, data);
+          return;
+        } catch (e) {
+          console.error(`❌ Error en callback ${cmdName}:`, e.message);
+          await callbackQuery.answer({ 
+            text: "❌ Error al procesar la acción.", 
+            showAlert: true 
+          });
+        }
+      }
+    }
+  });
+
   console.log("🎧 Escuchando comandos en todos los chats...");
   console.log("💡 Todos los comandos están cargados desde carpetas\n");
 }

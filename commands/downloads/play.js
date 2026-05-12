@@ -62,20 +62,7 @@ export default {
           title = titleMatch[1].replace(' - YouTube', '');
         }
         
-        const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
-        const thumbnailPath = path.join('./temp', `thumb_${videoId}.jpg`);
-        
-        const thumbnailResponse = await axios.get(thumbnailUrl, {
-          responseType: 'stream'
-        });
-        
-        const writer = fs.createWriteStream(thumbnailPath);
-        thumbnailResponse.data.pipe(writer);
-        
-        await new Promise((resolve, reject) => {
-          writer.on('finish', resolve);
-          writer.on('error', reject);
-        });
+        const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
         
         const message = `🎵 *VIDEO ENCONTRADO* 🎵
 
@@ -84,15 +71,10 @@ export default {
 
 📥 *Elige formato para descargar:*`;
 
+       
         await ctx.client.sendFile(ctx.chatId, {
-          file: thumbnailPath,
+          file: thumbnailUrl,
           caption: message,
-          parseMode: 'markdown'
-        });
-
-        
-        await ctx.reply({
-          message: '📥 *Selecciona el formato:*',
           parseMode: 'markdown',
           replyMarkup: {
             inlineKeyboard: [
