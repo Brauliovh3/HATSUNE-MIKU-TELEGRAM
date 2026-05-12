@@ -1,7 +1,9 @@
 import { TelegramClient } from "telegram";
 import { StringSession } from "telegram/sessions/index.js";
-import { NewMessage, CallbackQuery } from "telegram/events/index.js";
+import { NewMessage } from "telegram/events/index.js";
 import { Api } from "telegram";
+import pkg from 'telegram/events/index.js';
+const { CallbackQuery } = pkg;
 import QRCode from "qrcode";
 import input from "input";
 import fs from "fs";
@@ -298,7 +300,7 @@ async function startBot() {
     const data = event.query.data.toString();
     console.log('Callback data:', data);
 
-    // Find command that handles this callback
+ 
     for (const [cmdName, cmd] of global.commands) {
       if (cmd.callback && typeof cmd.callback === 'function') {
         try {
