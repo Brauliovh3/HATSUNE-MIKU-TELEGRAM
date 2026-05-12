@@ -1,3 +1,6 @@
+import fs from 'fs';
+import path from 'path';
+
 export default {
   command: ['s', 'sticker'],
   category: 'stickers',
@@ -49,13 +52,26 @@ export default {
         return ctx.reply('📸 *USO:* Responde a una imagen o envía una imagen con el comando\n📝 *Ejemplo:* .s (respondiendo a una imagen)');
       }
 
+     
+      const tempPath = path.join('./temp', `sticker_${Date.now()}.jpg`);
+      fs.writeFileSync(tempPath, imageBuffer);
 
+      
       await ctx.client.sendFile(ctx.chatId, {
-        file: imageBuffer,
+        file: tempPath,
         fileName: `sticker_${Date.now()}.webp`,
         mimeType: 'image/webp',
         forceDocument: false
       });
+
+      
+      setTimeout(() => {
+        try {
+          fs.unlinkSync(tempPath);
+        } catch (e) {
+          
+        }
+      }, 5000);
 
     } catch (error) {
       console.error('Error en comando sticker:', error);
