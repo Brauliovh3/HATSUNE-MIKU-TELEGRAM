@@ -49,16 +49,12 @@ export default {
         return ctx.reply('📸 *USO:* Responde a una imagen o envía una imagen con el comando\n📝 *Ejemplo:* .s (respondiendo a una imagen)');
       }
 
-   
-      const inputFile = await ctx.client.uploadFile({
+
+      await ctx.client.sendFile(ctx.chatId, {
         file: imageBuffer,
         fileName: `sticker_${Date.now()}.webp`,
-        mimeType: 'image/webp'
-      });
-
-      await ctx.client.sendMedia(ctx.chatId, {
-        type: 'sticker',
-        media: inputFile
+        mimeType: 'image/webp',
+        forceDocument: false
       });
 
     } catch (error) {

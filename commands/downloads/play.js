@@ -9,23 +9,40 @@ export default {
   cooldown: 5,
   async run(ctx, args) {
     if (!args || args.length === 0) {
-      return ctx.reply('🎵 *USO:* .play <URL de YouTube>\n📝 *Ejemplo:* .play https://youtube.com/watch?v=...');
+      return ctx.reply('🎵 *USO:* .play <título o URL de YouTube>\n📝 *Ejemplo:* .play Despacito\n📝 *Ejemplo:* .play https://youtube.com/watch?v=...');
     }
 
     const query = args.join(' ');
 
     try {
-      await ctx.reply('🔍 *Procesando video...*');
-
       let videoInfo;
+      let videoId;
+
       if (query.includes('youtube.com/watch?v=')) {
-        const videoId = query.split('v=')[1]?.split('&')[0];
+        videoId = query.split('v=')[1]?.split('&')[0];
         videoInfo = await ytdl.getInfo(`https://www.youtube.com/watch?v=${videoId}`);
       } else if (query.includes('youtu.be/')) {
-        const videoId = query.split('youtu.be/')[1]?.split('?')[0];
+        videoId = query.split('youtu.be/')[1]?.split('?')[0];
         videoInfo = await ytdl.getInfo(`https://www.youtube.com/watch?v=${videoId}`);
       } else {
-        return ctx.reply('❌ *Por favor usa una URL directa de YouTube*\n📝 *Ejemplo:* .play https://youtube.com/watch?v=...');
+       
+        await ctx.reply('🔍 *Buscando en YouTube...*');
+        
+        const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+        const searchResponse = await axios.get(searchUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          }
+        });
+
+        
+        const videoIdMatch = searchResponse.data.match(/"videoId":"([^"]+)"/);
+        if (!videoIdMatch) {
+          return ctx.reply('❌ No se encontraron resultados para tu búsqueda');
+        }
+        
+        videoId = videoIdMatch[1];
+        videoInfo = await ytdl.getInfo(`https://www.youtube.com/watch?v=${videoId}`);
       }
 
       if (!videoInfo) {
@@ -35,7 +52,6 @@ export default {
       const title = videoInfo.videoDetails.title;
       const duration = videoInfo.videoDetails.lengthSeconds;
       const thumbnail = videoInfo.videoDetails.thumbnails[0]?.url;
-      const videoId = videoInfo.videoDetails.videoId;
 
       const message = `🎵 *VIDEO ENCONTRADO* 🎵
 
@@ -43,7 +59,9 @@ export default {
 ⏱️ *Duración:* ${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}
 👁️ *Vistas:* ${parseInt(videoInfo.videoDetails.viewCount).toLocaleString()}
 
-🔘 *Selecciona formato para descargar:*`;
+� *Enlaces de descarga:*
+🎵 *Audio:* https://ytmp3.cc/youtube-to-mp3/${videoId}
+🎥 *Video:* https://ytmp4.cc/youtube-to-mp4/${videoId}`;
 
       await ctx.client.sendFile(ctx.chatId, {
         file: thumbnail,
@@ -51,25 +69,9 @@ export default {
         parseMode: 'markdown'
       });
 
-    
-      await ctx.reply({
-        message: '📥 *Elige formato de descarga:*',
-        parseMode: 'markdown',
-        replyMarkup: {
-          inlineKeyboard: [
-            [
-              { text: '🎵 Descargar Audio MP3', callbackData: `download_audio_${videoId}` }
-            ],
-            [
-              { text: '🎥 Descargar Video MP4', callbackData: `download_video_${videoId}` }
-            ]
-          ]
-        }
-      });
-
     } catch (error) {
       console.error('Error en play:', error);
-      await ctx.reply('❌ Error al procesar el video. Asegúrate de que la URL sea correcta.');
+      await ctx.reply('❌ Error al buscar el video. Intenta con otro término.');
     }
   }
 };
