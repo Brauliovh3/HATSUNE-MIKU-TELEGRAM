@@ -5,14 +5,19 @@ export default {
   middlewares: [],
   cooldown: 3,
   async run(ctx, args) {
-    await ctx.reply({
-      message:
-        `👤 **Tu información:**\n\n` +
-        `🆔 ID: \`${ctx.me.id}\`\n` +
-        `👤 Nombre: ${ctx.me.firstName} ${ctx.me.lastName || ""}\n` +
-        `🔖 Username: @${ctx.me.username || "sin username"}\n` +
-        `📱 Teléfono: +${ctx.me.phone}`,
-      parseMode: "markdown",
-    });
+    try {
+      const sender = ctx.from || await ctx.msg.getSender();
+      await ctx.reply({
+        message:
+          `👤 **Tu información:**\n\n` +
+          `🆔 ID: \`${ctx.senderId}\`\n` +
+          `👤 Nombre: ${sender?.firstName || "Desconocido"} ${sender?.lastName || ""}\n` +
+          `🔖 Username: @${sender?.username || "sin username"}\n`,
+        parseMode: "markdown",
+      });
+    } catch (error) {
+      console.error("Error en comando me:", error);
+      await ctx.reply({ message: "❌ Error al obtener tu información." });
+    }
   }
 };

@@ -5,9 +5,14 @@ export default {
   middlewares: [],
   cooldown: 2,
   async run(ctx, args) {
-    await ctx.reply({
-      message: `🆔 Chat ID: \`${ctx.chatId}\`\n👤 Tu ID: \`${ctx.senderId}\``,
-      parseMode: "markdown",
-    });
+    try {
+      await ctx.reply({
+        message: `🆔 Chat ID: \`${ctx.chatId}\`\n👤 Tu ID: \`${ctx.senderId}\``,
+        parseMode: "markdown",
+      });
+    } catch (error) {
+      console.error("Error en comando id:", error);
+      await ctx.reply({ message: "❌ Error al obtener los IDs." });
+    }
   }
 };

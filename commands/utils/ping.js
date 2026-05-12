@@ -9,10 +9,15 @@ export default {
     const sent = await ctx.reply({ message: "🏓 calculando..." });
     const ms = Date.now() - start;
     
-    await ctx.client.editMessage(ctx.chatId, {
-      message: sent.id,
-      text: `🏓 Pong! \`${ms}ms\``,
-      parseMode: "markdown",
-    });
+    try {
+      await ctx.client.editMessage(ctx.chatId, {
+        id: sent.id,
+        message: `🏓 Pong! \`${ms}ms\``,
+        parseMode: "markdown",
+      });
+    } catch (error) {
+      
+      await ctx.reply({ message: `🏓 Pong! \`${ms}ms\``, parseMode: "markdown" });
+    }
   }
 };

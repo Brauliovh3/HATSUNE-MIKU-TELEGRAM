@@ -5,41 +5,43 @@ export default {
   middlewares: [],
   cooldown: 3,
   async run(ctx, args) {
-  
-    const { menuObject, categoryAliases } = await import('../../nucleo/commands.js');
-    
-    const parts = ctx.text.split(" ");
-    const catArg = parts[1]?.toLowerCase();
-
-    if (catArg) {
-     
-      let found = null;
-      for (const [cat, aliases] of Object.entries(categoryAliases)) {
-        if (aliases.includes(catArg)) { 
-          found = cat; 
-          break; 
-        }
-      }
+    try {
+      const { menuObject, categoryAliases } = await import('../../nucleo/commands.js');
       
-      if (found && menuObject[found]) {
-        await ctx.reply({ message: menuObject[found] });
+      const parts = ctx.text.split(" ");
+      const catArg = parts[1]?.toLowerCase();
+
+      if (catArg) {
+        let found = null;
+        for (const [cat, aliases] of Object.entries(categoryAliases)) {
+          if (aliases.includes(catArg)) { 
+            found = cat; 
+            break; 
+          }
+        }
+        
+        if (found && menuObject[found]) {
+          await ctx.reply({ message: menuObject[found] });
+        } else {
+          await ctx.reply({ 
+            message: `❌ Categoría no encontrada.\nUsa: .menu <categoria>\nCategorías: ${Object.keys(categoryAliases).join(", ")}` 
+          });
+        }
       } else {
+        const menuText = `💙 **HATSUNE MIKU USERBOT** 💙\n\n` +
+          `Usa \`.menu <categoría>\` para ver comandos:\n\n` +
+          Object.entries(categoryAliases)
+            .map(([cat, aliases]) => `• \`.menu ${aliases[0]}\``)
+            .join("\n");
+
         await ctx.reply({ 
-          message: `❌ Categoría no encontrada.\nUsa: .menu <categoria>\nCategorías: ${Object.keys(categoryAliases).join(", ")}` 
+          message: menuText, 
+          parseMode: "markdown" 
         });
       }
-    } else {
-      
-      const menuText = `💙 **HATSUNE MIKU USERBOT** 💙\n\n` +
-        `Usa \`.menu <categoría>\` para ver comandos:\n\n` +
-        Object.entries(categoryAliases)
-          .map(([cat, aliases]) => `• \`.menu ${aliases[0]}\``)
-          .join("\n");
-
-      await ctx.reply({ 
-        message: menuText, 
-        parseMode: "markdown" 
-      });
+    } catch (error) {
+      console.error("Error en comando menu:", error);
+      await ctx.reply({ message: "❌ Error al cargar el menú." });
     }
   }
 };

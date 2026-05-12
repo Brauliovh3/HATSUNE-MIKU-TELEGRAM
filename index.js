@@ -234,32 +234,42 @@ async function startBot() {
       const cmdName = parts[0].toLowerCase();
       const args = parts.slice(1);
       
+      const cmd = global.commands.get(cmdName);
       
-      const { executeCommand } = await import("./nucleo/system/commandLoader.js");
-   
-      const ctx = {
-        client,
-        msg,
-        args,
-        text,
-        chatId,
-        senderId,
-        me,
-        myId,
-        reply: async (options) => {
-          if (typeof options === 'string') {
-            return await msg.reply({ message: options });
-          }
-          return await msg.reply(options);
-        },
-        from: msg.sender || await msg.getSender(),
-        message: msg
-      };
-      
-    
-      const result = await executeCommand(ctx, cmdName, args);
-      if (result.success) {
-        return;
+      if (cmd) {
+        
+        if (cmd.isOwner && senderId !== myId) {
+          await msg.reply({ message: "❌ Este comando solo puede usarlo el owner." });
+          return;
+        }
+        
+        try {
+       
+          const ctx = {
+            client,
+            msg,
+            args,
+            text,
+            chatId,
+            senderId,
+            me,
+            myId,
+            reply: async (options) => {
+              if (typeof options === 'string') {
+                return await msg.reply({ message: options });
+              }
+              return await msg.reply(options);
+            },
+            from: msg.sender || await msg.getSender(),
+            message: msg
+          };
+          
+          await cmd.run(ctx, args);
+          return;
+        } catch (e) {
+          console.error(`❌ Error en comando ${cmdName}:`, e.message);
+          await msg.reply({ message: "❌ Error al ejecutar el comando." });
+        }
       }
     }
 

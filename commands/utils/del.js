@@ -5,10 +5,15 @@ export default {
   middlewares: [],
   cooldown: 1,
   async run(ctx, args) {
-    if (ctx.msg.replyTo) {
-      const replied = await ctx.msg.getReplyMessage();
-      if (replied) await replied.delete({ revoke: true });
+    try {
+      if (ctx.msg.replyTo) {
+        const replied = await ctx.msg.getReplyMessage();
+        if (replied) await ctx.client.deleteMessages(ctx.chatId, [replied.id], { revoke: true });
+      }
+      await ctx.client.deleteMessages(ctx.chatId, [ctx.msg.id], { revoke: true });
+    } catch (error) {
+      console.error("Error en comando del:", error);
+      await ctx.reply({ message: "❌ No se pudieron eliminar los mensajes." });
     }
-    await ctx.msg.delete({ revoke: true });
   }
 };
