@@ -122,9 +122,13 @@ if (sessionString.length > 5) {
 
    
 
-    while (!autorizado) {
+    let intentos = 0;
+    const maxIntentos = 60; 
+
+    while (!autorizado && intentos < maxIntentos) {
 
       await new Promise((r) => setTimeout(r, 3000));
+      intentos++;
 
       try {
 
@@ -134,27 +138,49 @@ if (sessionString.length > 5) {
           })
         );
 
+        console.log("🔍 Verificando token...");
+
         if (loginResult instanceof Api.auth.LoginTokenSuccess) {
 
           autorizado = true;
 
-          console.log("✅ QR Escaneado");
+          console.log("✅ QR Escaneado exitosamente");
+          console.log("👤 Usuario:", loginResult.authorization.user.firstName || "Desconocido");
 
+         
+          await client.connect();
+          
           const session = client.session.save();
 
           fs.writeFileSync("./session.txt", session);
 
-          console.log("💾 Sesión guardada");
+          console.log("💾 Sesión guardada correctamente");
+          console.log("🔐 Conexión establecida");
 
           startBot();
 
+        } else if (loginResult instanceof Api.auth.LoginTokenNeeded) {
+          console.log("⏳ Token aún no autorizado...");
+        } else {
+          console.log("❌ Respuesta inesperada:", loginResult.className);
         }
 
       } catch (e) {
-
-        console.log("⌛ Esperando escaneo...");
-
+        console.log(`⌛ Esperando escaneo... (${intentos}/${maxIntentos})`);
+        
+        if (e.message.includes("TOKEN_EXPIRED")) {
+          console.log("❌ Token expirado. Genera un nuevo QR");
+          autorizado = true;
+        } else if (e.message.includes("SESSION_PASSWORD_NEEDED")) {
+          console.log("🔐 Se requiere contraseña 2FA");
+          autorizado = true;
+        }
       }
+    }
+
+    if (!autorizado) {
+      console.log("⏰ Tiempo de espera agotado. Intenta de nuevo.");
+      process.exit(0);
     }
 
   } else {
@@ -174,6 +200,16 @@ function startBot() {
   console.log("🤖 USERBOT ONLINE");
   console.log("=================================\n");
 
+  
+  if (!client.connected) {
+    console.log("🔄 Reconectando cliente...");
+    client.connect().then(() => {
+      console.log("✅ Cliente conectado correctamente");
+    }).catch(err => {
+      console.error("❌ Error al conectar:", err);
+    });
+  }
+
   client.addEventHandler(async (event) => {
 
     const msg = event.message;
@@ -182,33 +218,34 @@ function startBot() {
 
     const text = msg.message;
 
-    console.log("📩", text);
+    console.log("📩 Mensaje recibido:", text);
 
-   
+    try {
+      if (text === ".ping") {
+        console.log("🏓 Respondiendo a .ping");
+        await client.sendMessage(msg.chatId, {
+          message: "🏓 Pong",
+        });
+      }
 
-    if (text === ".ping") {
-
-      await client.sendMessage(msg.chatId, {
-        message: "🏓 Pong",
-      });
-
-    }
-
-  
-    if (text === ".menu") {
-
-      await client.sendMessage(msg.chatId, {
-        message: `
+      if (text === ".menu") {
+        console.log("📋 Respondiendo a .menu");
+        await client.sendMessage(msg.chatId, {
+          message: `
 💙 HATSUNE MIKU USERBOT 💙
 
 ⚡ .ping
 📋 .menu
 `,
-      });
-
+        });
+      }
+    } catch (error) {
+      console.error("❌ Error al enviar mensaje:", error);
     }
 
   });
+
+  console.log("🎧 Bot escuchando comandos...");
 
 }
 
