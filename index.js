@@ -1,3 +1,4 @@
+import dotenv from 'dotenv';
 import { Telegraf, Markup } from 'telegraf';
 import axios from 'axios';
 import fs from 'fs-extra';
@@ -7,6 +8,9 @@ import { categoryImages, mainMenuImage } from './nucleo/menuConfig.js';
 import { initDB } from './nucleo/system/initDB.js';
 import { loadCommands } from './nucleo/system/commandLoader.js';
 import serverQR from './nucleo/system/serverQR.js';
+
+
+dotenv.config();
 
 
 async function initializeBot() {
