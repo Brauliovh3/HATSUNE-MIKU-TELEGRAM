@@ -112,24 +112,28 @@ if (sessionString.length > 5) {
 
 }
 
+
 async function qrLoginFlow() {
-  console.log("📲 Iniciando proceso de QR Login...\n");
+  console.log(" Iniciando proceso de QR Login...\n");
 
   try {
-    // Generar token de login
-    console.log("� Obteniendo token de autorización...");
+    console.log(" Generando token de QR...");
+    console.log(" NOTA: Los tokens de Telegram expiran muy rápido");
+    console.log(" Escanea el QR inmediatamente después de aparecer\n");
+
+
     const result = await client.invoke(
       new Api.auth.ExportLoginToken({
         apiId,
         apiHash,
         exceptIds: [],
+        apiHash: apiHash,
       })
     );
 
     const token = result.token.toString("base64url");
     const qr = `tg://login?token=${token}`;
 
-    // Generar y mostrar QR
     const qrTerminal = await QRCode.toString(qr, {
       type: "terminal",
       small: true,
@@ -138,19 +142,23 @@ async function qrLoginFlow() {
     console.log(qrTerminal);
     await QRCode.toFile("./telegram-qr.png", qr);
 
-    console.log("📁 QR guardado: telegram-qr.png");
-    console.log("📱 Escanea desde Telegram:");
-    console.log("   Settings > Devices > Link Desktop Device");
-    console.log("   O abre el enlace: " + qr);
-    console.log("\n⏳ Esperando escaneo del QR...");
+    console.log(" QR guardado: telegram-qr.png");
+    console.log(" ESCANEA INMEDIATAMENTE:");
+    console.log("   1. Abre Telegram en tu teléfono");
+    console.log("   2. Ve a Settings > Devices > Link Desktop Device");
+    console.log("   3. Escanea el QR AHORA");
+    console.log("   4. O abre directamente: " + qr);
+    console.log("\n NOTA: El QR expira en segundos - ESCANEA AHORA!");
 
-    // Esperar el escaneo con verificación inmediata
+    
     let escaneado = false;
     let intentos = 0;
-    const maxIntentos = 120; // 2 minutos máximo
+    const maxIntentos = 30; 
+
+    console.log(" Verificando cada 500ms...");
 
     while (!escaneado && intentos < maxIntentos) {
-      await new Promise((r) => setTimeout(r, 1000));
+      await new Promise((r) => setTimeout(r, 500)); 
       intentos++;
 
       try {
@@ -162,25 +170,25 @@ async function qrLoginFlow() {
 
         if (loginResult instanceof Api.auth.LoginTokenSuccess) {
           escaneado = true;
-          
-          console.log("\n✅ QR Escaneado exitosamente!");
-          console.log("👤 Usuario:", loginResult.authorization.user.firstName || "Desconocido");
-          
-          // Guardar sesión en carpeta sessions
+
+          console.log("\n Escaneado exitosamente!");
+          console.log(" Usuario:", loginResult.authorization.user.firstName || "Desconocido");
+
+    
           const sessionName = `session_${Date.now()}`;
           const sessionPath = `./sessions/${sessionName}`;
-          
+
           if (!fs.existsSync("./sessions")) {
             fs.mkdirSync("./sessions");
           }
 
           await client.connect();
           const session = client.session.save();
-          
-          
+
+     
           fs.writeFileSync("./session.txt", session);
-          
-          
+
+        
           const sessionData = {
             session: session,
             userId: loginResult.authorization.user.id,
@@ -189,66 +197,101 @@ async function qrLoginFlow() {
             username: loginResult.authorization.user.username,
             phone: loginResult.authorization.user.phone,
             created: new Date().toISOString(),
-            sessionName: sessionName
+            sessionName: sessionName,
           };
-          
+
           fs.writeFileSync(`${sessionPath}.txt`, session);
           fs.writeFileSync(`${sessionPath}.json`, JSON.stringify(sessionData, null, 2));
           fs.writeFileSync("./session.json", JSON.stringify(sessionData, null, 2));
 
-          console.log("💾 Sesión guardada correctamente:");
-          console.log(`   � Principal: session.txt`);
-          console.log(`   📁 Backup: sessions/${sessionName}.txt`);
-          console.log(`   📁 Datos: sessions/${sessionName}.json`);
-          console.log("🔐 Conexión establecida y verificada");
+          console.log(" Sesión guardada correctamente:");
+          console.log(`   Principal: session.txt`);
+          console.log(`   Backup: sessions/${sessionName}.txt`);
+          console.log(`   Datos: sessions/${sessionName}.json`);
+          console.log(" Conexión establecida y verificada");
 
           startBot();
           return;
-
         } else if (loginResult instanceof Api.auth.LoginTokenNeeded) {
-        
-          if (intentos % 15 === 0) {
-            console.log(`⏳ QR listo para escanear... (${intentos}s/${maxIntentos}s)`);
-          }
+          process.stdout.write(` Esperando escaneo... (${intentos}/${maxIntentos})\r`);
         }
-
       } catch (e) {
         if (e.message.includes("TOKEN_EXPIRED") || e.message.includes("EXPIRED")) {
-          console.log("\n⏰ El token ha expirado");
-          console.log("❌ Por favor, genera un nuevo QR");
+          console.log("\n Token expirado - intenta de nuevo");
           break;
         } else if (e.message.includes("SESSION_PASSWORD_NEEDED")) {
-          console.log("\n🔐 Se requiere contraseña 2FA");
-          const password = await input.text("🔐 Contraseña 2FA: ");
-         
+          console.log("\n Se requiere contraseña 2FA");
+          const password = await input.text(" Contraseña 2FA: ");
           break;
-        } else {
-        
-          if (intentos % 30 === 0) {
-            console.log(`⌛ Esperando escaneo... (${intentos}s)`);
-          }
         }
       }
     }
 
     if (!escaneado) {
-      console.log("\n⏰ Tiempo de espera agotado");
-      console.log("💡 Intenta escanear más rápido o genera un nuevo QR");
-    }
+      console.log("\n No se pudo escanear el QR a tiempo");
+      console.log(" Opción: Usa login por código (opción 1) para más tiempo");
 
+
+      const usarCodigo = await input.text("¿Quieres intentar con código? (s/n): ");
+      if (usarCodigo.toLowerCase() === "s") {
+        await phoneLoginFlow();
+        return;
+      }
+    }
   } catch (error) {
-    console.error("❌ Error en el proceso de QR:", error.message);
+    console.error(" Error en el proceso de QR:", error.message);
+    console.log(" Intenta con login por código (opción 1)");
   }
 
-  console.log("\n🔄 Volviendo al menú principal...");
+  console.log("\n Volviendo al menú principal...");
   process.exit(0);
 }
 
-function startBot() {
 
+async function phoneLoginFlow() {
+  console.log("\n Iniciando login por código...\n");
+
+  try {
+    await client.start({
+      phoneNumber: async () => await input.text(" Número Telegram: "),
+      password: async () => await input.text(" Contraseña 2FA: "),
+      phoneCode: async () => await input.text(" Código Telegram: "),
+      onError: (err) => console.log(err),
+    });
+
+    const session = client.session.save();
+    fs.writeFileSync("./session.txt", session);
+
+
+    const me = await client.getMe();
+    const sessionData = {
+      session: session,
+      userId: me.id,
+      firstName: me.firstName,
+      lastName: me.lastName,
+      username: me.username,
+      phone: me.phone,
+      created: new Date().toISOString(),
+    };
+
+    fs.writeFileSync("./session.json", JSON.stringify(sessionData, null, 2));
+
+    console.log(" Login exitoso");
+    console.log(" Sesión guardada");
+    console.log(` Usuario: ${me.firstName}`);
+
+    startBot();
+  } catch (error) {
+    console.error(" Error en login por código:", error.message);
+  }
+}
+
+
+function startBot() {
   console.log("\n=================================");
-  console.log("🤖 USERBOT ONLINE");
+  console.log(" USERBOT ONLINE");
   console.log("=================================\n");
+
 
   
   if (!client.connected) {
