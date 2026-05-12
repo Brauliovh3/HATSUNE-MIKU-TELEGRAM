@@ -5,12 +5,12 @@ function initDB(ctx) {
   const chatId = ctx.chat?.id?.toString() || 'unknown'
   const isGroup = ctx.chat?.type === 'group' || ctx.chat?.type === 'supergroup'
   
-  // Inicializar configuración del bot
+ 
   const settings = global.db.data.settings[chatId] ||= {}
   settings.self ??= false
   settings.prefix ??= ['/', '!', '.', '#']
   settings.commandsejecut ??= isNumber(settings.commandsejecut) ? settings.commandsejecut : 0
-  settings.id ??= '@hatsune_miku_channel' // Canal de Telegram
+  settings.id ??= 'https://t.me/BVH3INDUSTRIES' 
   settings.nameid ??= '💙HATSUNE MIKU CHANNEL💙'
   settings.type ??= 'Owner'
   settings.link ??= 'https://t.me/hatsune_miku_channel'
@@ -22,7 +22,7 @@ function initDB(ctx) {
   settings.botname ??= '💙HATSUNE MIKU💙'  
   settings.owner ??= '(ㅎㅊDEPOOLㅊㅎ)'
 
-  // Inicializar usuario
+  
   const user = global.db.data.users[userId] ||= {}
   user.name ??= ctx.from?.first_name || ctx.from?.username || 'Usuario'
   user.username ??= ctx.from?.username || ''
@@ -43,7 +43,7 @@ function initDB(ctx) {
   user.characters = Array.isArray(user.characters) ? user.characters : []
   user.waifu = user.waifu || { characters: [], pending: null, cooldown: 0 }
 
-  // Inicializar chat (solo para grupos)
+  
   if (isGroup) {
     const chat = global.db.data.chats[chatId] ||= {}
     chat.users ||= {}
@@ -73,8 +73,8 @@ function initDB(ctx) {
     chat.users[userId].characters = Array.isArray(chat.users[userId].characters) ? chat.users[userId].characters : []
   }
 
-  // Guardar cambios periódicamente
-  if (Math.random() < 0.1) { // 10% de probabilidad de guardar
+  
+  if (Math.random() < 0.1) { 
     saveDatabase()
   }
 }
@@ -99,7 +99,7 @@ function loadDatabase() {
   }
 }
 
-// Cargar base de datos al iniciar
+
 loadDatabase()
 
-export default initDB;
+export { initDB };
