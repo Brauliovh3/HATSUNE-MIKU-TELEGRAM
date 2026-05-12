@@ -145,10 +145,12 @@ async function qrLoginFlow() {
 
       let autorizado = false;
       let intentos = 0;
-      const maxIntentos = 20;
+      const maxIntentos = 60; // 60 intentos = 1 minuto
+
+      console.log("⏱️ Verificando token cada 1 segundo...");
 
       while (!autorizado && intentos < maxIntentos) {
-        await new Promise((r) => setTimeout(r, 3000));
+        await new Promise((r) => setTimeout(r, 1000)); // Reducir a 1 segundo
         intentos++;
 
         try {
@@ -158,7 +160,7 @@ async function qrLoginFlow() {
             })
           );
 
-          console.log("🔍 Verificando token...");
+          console.log(`🔍 Verificando token... (${intentos}/${maxIntentos})`);
 
           if (loginResult instanceof Api.auth.LoginTokenSuccess) {
             autorizado = true;
@@ -171,7 +173,6 @@ async function qrLoginFlow() {
             const session = client.session.save();
             fs.writeFileSync("./session.txt", session);
 
-           
             const sessionData = {
               session: session,
               userId: loginResult.authorization.user.id,
@@ -191,24 +192,26 @@ async function qrLoginFlow() {
             return;
 
           } else if (loginResult instanceof Api.auth.LoginTokenNeeded) {
-            console.log("⏳ Token aún no autorizado...");
+            console.log("⏳ Token listo para escanear...");
           } else {
             console.log("❌ Respuesta inesperada:", loginResult.className);
           }
 
         } catch (e) {
-          console.log(`⌛ Esperando escaneo... (${intentos}/${maxIntentos})`);
-          
-          if (e.message.includes("TOKEN_EXPIRED")) {
+          if (e.message.includes("TOKEN_EXPIRED") || e.message.includes("EXPIRED")) {
             console.log("⏰ Token expirado. Generando nuevo QR...");
             autorizado = true; 
             break;
           } else if (e.message.includes("SESSION_PASSWORD_NEEDED")) {
             console.log("🔐 Se requiere contraseña 2FA");
             const password = await input.text("🔐 Contraseña 2FA: ");
-         
             autorizado = true;
             break;
+          } else {
+            // Mostrar errores solo cada 10 intentos para no saturar
+            if (intentos % 10 === 0) {
+              console.log(`⌛ Esperando escaneo... (${intentos}/${maxIntentos})`);
+            }
           }
         }
       }
