@@ -54,17 +54,17 @@ export async function loadCommands() {
   
 
   const commandFolders = [
-    '../commands/economia',
-    '../commands/gacha', 
-    '../commands/downloads',
-    '../commands/profile',
-    '../commands/sockets',
-    '../commands/utils',
-    '../commands/grupo',
-    '../commands/nsfw',
-    '../commands/anime',
-    '../commands/stickers',
-    '../commands/owner'
+    '../../commands/economia',
+    '../../commands/gacha', 
+    '../../commands/downloads',
+    '../../commands/profile',
+    '../../commands/sockets',
+    '../../commands/utils',
+    '../../commands/grupo',
+    '../../commands/nsfw',
+    '../../commands/anime',
+    '../../commands/stickers',
+    '../../commands/owner'
   ];
 
   let totalCommands = 0;
