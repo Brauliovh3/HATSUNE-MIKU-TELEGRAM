@@ -1,12 +1,21 @@
 import { TelegramClient } from "telegram";
 import { StringSession } from "telegram/sessions/index.js";
-import input from "input";
+import readline from "readline";
 import fs from "fs";
 
 const apiId = 37036231;
 const apiHash = "bad9b8fce29127e133f533dc5b50e66b";
 
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
 
+function question(text) {
+  return new Promise((resolve) => {
+    rl.question(text, resolve);
+  });
+}
 
 let sessionString = "";
 
@@ -23,60 +32,27 @@ const client = new TelegramClient(
   }
 );
 
-
 await client.start({
   phoneNumber: async () =>
-    await input.text("📱 Número Telegram: "),
+    await question("📱 Número Telegram: "),
 
   password: async () =>
-    await input.text("🔐 Contraseña 2FA: "),
+    await question("🔐 2FA Password: "),
 
   phoneCode: async () =>
-    await input.text("💬 Código Telegram: "),
+    await question("💬 Código Telegram: "),
 
   onError: (err) => console.log(err),
 });
 
-
+console.log("✅ Userbot conectado");
 
 const session = client.session.save();
 
 fs.writeFileSync("./session.txt", session);
 
-console.log("✅ Userbot conectado");
-console.log("💾 Sesión guardada");
+console.log("💾 Session guardada");
 
+rl.close();
 
-
-client.addEventHandler(async (event) => {
-  const message = event.message;
-
-  if (!message || !message.message) return;
-
-  const text = message.message;
-
-  console.log("📩", text);
-
-
-
-  if (text === ".ping") {
-    await client.sendMessage(message.chatId, {
-      message: "🏓 Pong",
-    });
-  }
-
-
-
-  if (text === ".menu") {
-    await client.sendMessage(message.chatId, {
-      message: `
-💙 HATSUNE MIKU USERBOT 💙
-
-⚡ .ping
-📋 .menu
-`,
-    });
-  }
-});
-
-console.log("🤖 Sistema iniciado");
+process.exit(0);
