@@ -113,124 +113,134 @@ if (sessionString.length > 5) {
 }
 
 async function qrLoginFlow() {
-  let maxRegenerations = 5;
-  let regenerationCount = 0;
+  console.log("📲 Iniciando proceso de QR Login...\n");
 
-  while (regenerationCount < maxRegenerations) {
-    try {
-      console.log(`📲 Generando QR Login... (${regenerationCount + 1}/${maxRegenerations})\n`);
+  try {
+    // Generar token de login
+    console.log("� Obteniendo token de autorización...");
+    const result = await client.invoke(
+      new Api.auth.ExportLoginToken({
+        apiId,
+        apiHash,
+        exceptIds: [],
+      })
+    );
 
-      const result = await client.invoke(
-        new Api.auth.ExportLoginToken({
-          apiId,
-          apiHash,
-          exceptIds: [],
-        })
-      );
+    const token = result.token.toString("base64url");
+    const qr = `tg://login?token=${token}`;
 
-      const token = result.token.toString("base64url");
-      const qr = `tg://login?token=${token}`;
+    // Generar y mostrar QR
+    const qrTerminal = await QRCode.toString(qr, {
+      type: "terminal",
+      small: true,
+    });
 
-      const qrTerminal = await QRCode.toString(qr, {
-        type: "terminal",
-        small: true,
-      });
+    console.log(qrTerminal);
+    await QRCode.toFile("./telegram-qr.png", qr);
 
-      console.log(qrTerminal);
-      await QRCode.toFile("./telegram-qr.png", qr);
+    console.log("📁 QR guardado: telegram-qr.png");
+    console.log("📱 Escanea desde Telegram:");
+    console.log("   Settings > Devices > Link Desktop Device");
+    console.log("   O abre el enlace: " + qr);
+    console.log("\n⏳ Esperando escaneo del QR...");
 
-      console.log("📁 QR guardado: telegram-qr.png");
-      console.log("📱 Escanea desde Telegram");
-      console.log("Settings > Devices > Link Desktop Device\n");
+    // Esperar el escaneo con verificación inmediata
+    let escaneado = false;
+    let intentos = 0;
+    const maxIntentos = 120; // 2 minutos máximo
 
-      let autorizado = false;
-      let intentos = 0;
-      const maxIntentos = 60; // 60 intentos = 1 minuto
+    while (!escaneado && intentos < maxIntentos) {
+      await new Promise((r) => setTimeout(r, 1000));
+      intentos++;
 
-      console.log("⏱️ Verificando token cada 1 segundo...");
+      try {
+        const loginResult = await client.invoke(
+          new Api.auth.ImportLoginToken({
+            token: result.token,
+          })
+        );
 
-      while (!autorizado && intentos < maxIntentos) {
-        await new Promise((r) => setTimeout(r, 1000)); // Reducir a 1 segundo
-        intentos++;
-
-        try {
-          const loginResult = await client.invoke(
-            new Api.auth.ImportLoginToken({
-              token: result.token,
-            })
-          );
-
-          console.log(`🔍 Verificando token... (${intentos}/${maxIntentos})`);
-
-          if (loginResult instanceof Api.auth.LoginTokenSuccess) {
-            autorizado = true;
-
-            console.log("✅ QR Escaneado exitosamente");
-            console.log("👤 Usuario:", loginResult.authorization.user.firstName || "Desconocido");
-
-            await client.connect();
-            
-            const session = client.session.save();
-            fs.writeFileSync("./session.txt", session);
-
-            const sessionData = {
-              session: session,
-              userId: loginResult.authorization.user.id,
-              firstName: loginResult.authorization.user.firstName,
-              lastName: loginResult.authorization.user.lastName,
-              username: loginResult.authorization.user.username,
-              created: new Date().toISOString()
-            };
-            
-            fs.writeFileSync("./session.json", JSON.stringify(sessionData, null, 2));
-
-            console.log("💾 Sesión guardada correctamente");
-            console.log("🔐 Conexión establecida");
-            console.log("📁 Archivos de sesión: session.txt y session.json");
-
-            startBot();
-            return;
-
-          } else if (loginResult instanceof Api.auth.LoginTokenNeeded) {
-            console.log("⏳ Token listo para escanear...");
-          } else {
-            console.log("❌ Respuesta inesperada:", loginResult.className);
+        if (loginResult instanceof Api.auth.LoginTokenSuccess) {
+          escaneado = true;
+          
+          console.log("\n✅ QR Escaneado exitosamente!");
+          console.log("👤 Usuario:", loginResult.authorization.user.firstName || "Desconocido");
+          
+          // Guardar sesión en carpeta sessions
+          const sessionName = `session_${Date.now()}`;
+          const sessionPath = `./sessions/${sessionName}`;
+          
+          if (!fs.existsSync("./sessions")) {
+            fs.mkdirSync("./sessions");
           }
 
-        } catch (e) {
-          if (e.message.includes("TOKEN_EXPIRED") || e.message.includes("EXPIRED")) {
-            console.log("⏰ Token expirado. Generando nuevo QR...");
-            autorizado = true; 
-            break;
-          } else if (e.message.includes("SESSION_PASSWORD_NEEDED")) {
-            console.log("🔐 Se requiere contraseña 2FA");
-            const password = await input.text("🔐 Contraseña 2FA: ");
-            autorizado = true;
-            break;
-          } else {
-            // Mostrar errores solo cada 10 intentos para no saturar
-            if (intentos % 10 === 0) {
-              console.log(`⌛ Esperando escaneo... (${intentos}/${maxIntentos})`);
-            }
+          await client.connect();
+          const session = client.session.save();
+          
+          
+          fs.writeFileSync("./session.txt", session);
+          
+          
+          const sessionData = {
+            session: session,
+            userId: loginResult.authorization.user.id,
+            firstName: loginResult.authorization.user.firstName,
+            lastName: loginResult.authorization.user.lastName,
+            username: loginResult.authorization.user.username,
+            phone: loginResult.authorization.user.phone,
+            created: new Date().toISOString(),
+            sessionName: sessionName
+          };
+          
+          fs.writeFileSync(`${sessionPath}.txt`, session);
+          fs.writeFileSync(`${sessionPath}.json`, JSON.stringify(sessionData, null, 2));
+          fs.writeFileSync("./session.json", JSON.stringify(sessionData, null, 2));
+
+          console.log("💾 Sesión guardada correctamente:");
+          console.log(`   � Principal: session.txt`);
+          console.log(`   📁 Backup: sessions/${sessionName}.txt`);
+          console.log(`   📁 Datos: sessions/${sessionName}.json`);
+          console.log("🔐 Conexión establecida y verificada");
+
+          startBot();
+          return;
+
+        } else if (loginResult instanceof Api.auth.LoginTokenNeeded) {
+        
+          if (intentos % 15 === 0) {
+            console.log(`⏳ QR listo para escanear... (${intentos}s/${maxIntentos}s)`);
+          }
+        }
+
+      } catch (e) {
+        if (e.message.includes("TOKEN_EXPIRED") || e.message.includes("EXPIRED")) {
+          console.log("\n⏰ El token ha expirado");
+          console.log("❌ Por favor, genera un nuevo QR");
+          break;
+        } else if (e.message.includes("SESSION_PASSWORD_NEEDED")) {
+          console.log("\n🔐 Se requiere contraseña 2FA");
+          const password = await input.text("🔐 Contraseña 2FA: ");
+         
+          break;
+        } else {
+        
+          if (intentos % 30 === 0) {
+            console.log(`⌛ Esperando escaneo... (${intentos}s)`);
           }
         }
       }
-
-      if (!autorizado) {
-        console.log("⏰ Tiempo de espera agotado para este QR.");
-        regenerationCount++;
-        if (regenerationCount < maxRegenerations) {
-          console.log("🔄 Generando nuevo QR...\n");
-        }
-      }
-
-    } catch (error) {
-      console.error("❌ Error generando QR:", error);
-      regenerationCount++;
     }
+
+    if (!escaneado) {
+      console.log("\n⏰ Tiempo de espera agotado");
+      console.log("💡 Intenta escanear más rápido o genera un nuevo QR");
+    }
+
+  } catch (error) {
+    console.error("❌ Error en el proceso de QR:", error.message);
   }
 
-  console.log("❌ Máximo de intentos alcanzado. Intenta más tarde.");
+  console.log("\n🔄 Volviendo al menú principal...");
   process.exit(0);
 }
 
