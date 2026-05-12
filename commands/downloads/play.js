@@ -76,13 +76,13 @@ export default {
           file: thumbnailUrl,
           caption: message,
           parseMode: 'markdown',
-          replyMarkup: {
-            inlineKeyboard: [
+          reply_markup: {
+            inline_keyboard: [
               [
-                { text: '🎵 Descargar Audio MP3', callbackData: `download_audio_${videoId}` }
+                { text: '🎵 Descargar Audio MP3', callback_data: `download_audio_${videoId}` }
               ],
               [
-                { text: '🎥 Descargar Video MP4', callbackData: `download_video_${videoId}` }
+                { text: '🎥 Descargar Video MP4', callback_data: `download_video_${videoId}` }
               ]
             ]
           }
@@ -128,10 +128,9 @@ export default {
 
   async callback(ctx, callbackData) {
     try {
-      const [action, videoId] = callbackData.split('_');
+      const [action, format, actualVideoId] = callbackData.split('_');
       
-      if (action === 'download' && (videoId.startsWith('audio') || videoId.startsWith('video'))) {
-        const [format, actualVideoId] = videoId.split('_');
+      if (action === 'download' && (format === 'audio' || format === 'video')) {
         
         await ctx.answerCallbackQuery({
           text: `⏳ *Preparando descarga de ${format === 'audio' ? 'Audio MP3' : 'Video MP4'}...*`,
