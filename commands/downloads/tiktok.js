@@ -10,23 +10,6 @@ export default {
     }
 
     const url = args[0];
-    const userId = ctx.senderId;
-    
-    // Ensure database is initialized
-    if (!global.db.data) {
-      global.db.data = { users: {}, chats: {}, settings: {}, cooldowns: {} };
-    }
-    if (!global.db.data.users) {
-      global.db.data.users = {};
-    }
-    
-    const user = global.db.data.users[userId] || { coins: 0 };
-    
-    
-    const cost = 5;
-    if ((user?.coins || 0) < cost) {
-      return ctx.reply(`❌ No tienes suficientes 🌱 Cebollines\n💰 Costo: ${cost} 🌱 Cebollines\n📊 Tienes: ${user?.coins || 0} 🌱 Cebollines`);
-    }
 
     if (!url.includes('tiktok.com')) {
       return ctx.reply('❌ Por favor proporciona una URL válida de TikTok');
@@ -79,9 +62,6 @@ export default {
         const altResponse = await axios.get(altApiUrl, { timeout: 30000 });
         
         if (altResponse.data && altResponse.data.video_url) {
-          user.coins = (user.coins || 0) - cost;
-          user.usedcommands = (user.usedcommands || 0) + 1;
-          
           const videoResponse = await axios.get(altResponse.data.video_url, {
             responseType: 'stream',
             timeout: 30000
@@ -90,7 +70,7 @@ export default {
           await ctx.replyWithVideo({ 
             source: videoResponse.data 
           }, {
-            caption: `📱 *TikTok Descargado* 📱\n\n💰 Costo: ${cost} 🌱 Cebollines\n📊 Tus Cebollines: ${user.coins} 🌱 Cebollines\n\n💙 Descargado por Hatsune Miku Bot`,
+            caption: `📱 *TikTok Descargado* 📱\n\n💙 Descargado por Hatsune Miku Bot`,
             parse_mode: 'Markdown'
           });
         } else {

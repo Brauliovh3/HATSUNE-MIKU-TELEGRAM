@@ -9,12 +9,17 @@ dotenv.config();
 export default {
   command: ['play'],
   category: 'downloads',
-  description: 'Descargar música o video de YouTube',
+  description: 'Descargar musica o video de YouTube',
   middlewares: [],
   cooldown: 5,
   async run(ctx, args) {
     if (!args || args.length === 0) {
-      return ctx.reply('🎵 *USO:* .play <título o URL de YouTube>\n📝 *Ejemplo:* .play Despacito\n📝 *Ejemplo:* .play https://youtube.com/watch?v=...');
+      return ctx.reply('🎵 *USO:* .play <titulo o URL de YouTube>\n📝 *Ejemplo:* .play Despacito\n📝 *Ejemplo:* .play https://youtube.com/watch?v=...');
+    }
+
+
+    if (args.length === 1 && /^[1-4]$/.test(args[0])) {
+      return ctx.reply('📋 *Opciones de descarga:*\n\n1️⃣ *Audio MP3*\n2️⃣ *Video MP4*\n3️⃣ *Audio WAV*\n4️⃣ *Video AVI*\n\n💡 *Responde con un numero o busca con texto!*');
     }
 
     const query = args.join(' ');
@@ -64,7 +69,7 @@ export default {
         
         const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
         
-        
+       
         await ctx.client.sendFile(ctx.chatId, {
           file: thumbnailUrl,
           caption: `🎵 *VIDEO ENCONTRADO* 🎵
@@ -76,66 +81,47 @@ export default {
           parseMode: 'markdown',
           buttons: [
             [
-              {
-                text: '🎵 Audio MP3',
-                data: Buffer.from(`audio_${videoId}`)
-              },
-              {
-                text: '🎥 Video MP4',
-                data: Buffer.from(`video_${videoId}`)
-              }
+              { text: '🎵 Audio MP3', data: Buffer.from(`audio_${videoId}`) }
             ],
             [
-              {
-                text: '🎼 Audio WAV',
-                data: Buffer.from(`wav_${videoId}`)
-              },
-              {
-                text: '🎬 Video AVI',
-                data: Buffer.from(`avi_${videoId}`)
-              }
+              { text: '🎥 Video MP4', data: Buffer.from(`video_${videoId}`) }
             ],
             [
-              {
-                text: '📹 Video MOV',
-                data: Buffer.from(`mov_${videoId}`)
-              },
-              {
-                text: '🎞️ Video MKV',
-                data: Buffer.from(`mkv_${videoId}`)
-              },
-              {
-                text: '🎧 Audio FLAC',
-                data: Buffer.from(`flac_${videoId}`)
-              },
-              {
-                text: '🎵 Audio AAC',
-                data: Buffer.from(`aac_${videoId}`)
-              }
+              { text: '🎼 Audio WAV', data: Buffer.from(`wav_${videoId}`) }
             ],
             [
-              {
-                text: '📽️ Video WEBM',
-                data: Buffer.from(`webm_${videoId}`)
-              },
-              {
-                text: '🎥 Video 3GP',
-                data: Buffer.from(`3gp_${videoId}`)
-              },
-              {
-                text: '🎵 Audio OGG',
-                data: Buffer.from(`ogg_${videoId}`)
-              },
-              {
-                text: '🎥 Video M4V',
-                data: Buffer.from(`m4v_${videoId}`)
-              }
+              { text: '🎬 Video AVI', data: Buffer.from(`avi_${videoId}`) }
+            ],
+            [
+              { text: '📹 Video MOV', data: Buffer.from(`mov_${videoId}`) }
+            ],
+            [
+              { text: '🎞️ Video MKV', data: Buffer.from(`mkv_${videoId}`) }
+            ],
+            [
+              { text: '🎧 Audio FLAC', data: Buffer.from(`flac_${videoId}`) }
+            ],
+            [
+              { text: '🎵 Audio AAC', data: Buffer.from(`aac_${videoId}`) }
+            ],
+            [
+              { text: '📽️ Video WEBM', data: Buffer.from(`webm_${videoId}`) }
+            ],
+            [
+              { text: '🎥 Video 3GP', data: Buffer.from(`3gp_${videoId}`) }
+            ],
+            [
+              { text: '🎵 Audio OGG', data: Buffer.from(`ogg_${videoId}`) }
+            ],
+            [
+              { text: '🎥 Video M4V', data: Buffer.from(`m4v_${videoId}`) }
             ]
           ]
         });
         
         setTimeout(() => {
           try {
+           
           
             fs.unlinkSync(thumbnailPath);
           } catch (e) {
@@ -177,6 +163,29 @@ export default {
     try {
       const data = callbackData.toString();
       
+      
+      if (/^[1-4]$/.test(data)) {
+        const formatMap = {
+          '1': { name: 'Audio MP3', api: 'ytmp3', format: 'audio' },
+          '2': { name: 'Video MP4', api: 'ytmp4', format: 'video' },
+          '3': { name: 'Audio WAV', api: 'ytmp3', format: 'wav' },
+          '4': { name: 'Video AVI', api: 'ytmp4', format: 'avi' }
+        };
+        
+        const selectedFormat = formatMap[data];
+        if (selectedFormat) {
+         
+          const simulatedData = `${selectedFormat.format}_${ctx.lastVideoId || 'default'}`;
+          return this.callback(ctx, simulatedData);
+        }
+      }
+      
+      
+      if (data.includes('_')) {
+        const parts = data.split('_');
+        ctx.lastVideoId = parts[1];
+      }
+      
       const formats = {
         'audio': { name: 'Audio MP3', api: 'ytmp3' },
         'video': { name: 'Video MP4', api: 'ytmp4' },
@@ -199,6 +208,7 @@ export default {
         if (data.startsWith(`${format}_`)) {
           formatFound = format;
           actualVideoId = data.replace(`${format}_`, '');
+          ctx.lastVideoId = actualVideoId;
           break;
         }
       }
@@ -232,7 +242,7 @@ export default {
             fileWriter.on('error', reject);
           });
           
-          // Reply to original message
+       
           await ctx.client.sendFile(ctx.chatId, {
             file: filePath,
             caption: `✅ *${formatInfo.name} descargado*`,
