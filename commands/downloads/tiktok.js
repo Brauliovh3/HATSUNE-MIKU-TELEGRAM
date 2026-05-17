@@ -40,12 +40,12 @@ export default {
       user.usedcommands = (user.usedcommands || 0) + 1;
 
       const videoResponse = await axios.get(videoData.dl, {
-        responseType: 'stream',
+        responseType: 'arraybuffer',
         timeout: 30000
       });
 
       await ctx.replyWithVideo({ 
-        source: videoResponse.data 
+        source: Buffer.from(videoResponse.data) 
       }, {
         caption: `✨ **TIKTOK DOWNLOAD** ✨\n\n📝 **Título:** ${videoData.title || 'Sin título'}\n\n💙 **Hatsune Miku Bot**`,
         parseMode: 'markdown'
