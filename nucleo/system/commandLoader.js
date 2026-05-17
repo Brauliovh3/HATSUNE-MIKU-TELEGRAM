@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import settings from '../../settings.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,7 +12,7 @@ global.commands = new Map();
 
 const middlewares = {
   isOwner: (ctx, cmd) => {
-    if (cmd.isOwner && ctx.senderId !== ctx.myId) {
+    if (cmd.isOwner && ctx.senderId !== settings.ownerId) {
       ctx.reply({ message: '❌ Este comando solo puede usarlo el owner.' });
       return false;
     }

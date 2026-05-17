@@ -1,4 +1,5 @@
 import fs from 'fs';
+import defaultSettings from '../../settings.js';
 
 let isNumber = (x) => typeof x === 'number' && !isNaN(x)
 
@@ -10,19 +11,19 @@ function initDB(ctx) {
  
   const settings = global.db.data.settings[chatId] ||= {}
   settings.self ??= false
-  settings.prefix ??= ['/', '!', '.', '#']
+  settings.prefix ??= defaultSettings.prefix
   settings.commandsejecut ??= isNumber(settings.commandsejecut) ? settings.commandsejecut : 0
-  settings.id ??= 'https://t.me/BVH3INDUSTRIES' 
+  settings.id ??= defaultSettings.link
   settings.nameid ??= '💙HATSUNE MIKU CHANNEL💙'
   settings.type ??= 'Owner'
-  settings.link ??= 'https://t.me/hatsune_miku_channel'
-  settings.banner ??= 'https://i.pinimg.com/736x/0c/1e/f8/0c1ef8e804983e634fbf13df1044a41f.jpg'
-  settings.icon ??= 'https://i.pinimg.com/736x/0c/1e/f8/0c1ef8e804983e634fbf13df1044a41f.jpg'
-  settings.currency ??= '🌱 Cebollines'
-  settings.audios ??= false
-  settings.namebot ??= '💙HATSUNE MIKU💙'
-  settings.botname ??= '💙HATSUNE MIKU💙'  
-  settings.owner ??= '(ㅎㅊDEPOOLㅊㅎ)'
+  settings.link ??= defaultSettings.link
+  settings.banner ??= defaultSettings.banner
+  settings.icon ??= defaultSettings.icon
+  settings.currency ??= defaultSettings.currency
+  settings.audios ??= defaultSettings.audios
+  settings.namebot ??= defaultSettings.namebot
+  settings.botname ??= defaultSettings.botname
+  settings.owner ??= defaultSettings.owner
 
   
   const user = global.db.data.users[userId] ||= {}

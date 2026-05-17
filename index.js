@@ -8,6 +8,7 @@ import QRCode from "qrcode";
 import input from "input";
 import fs from "fs";
 import dotenv from "dotenv";
+import settings from "./settings.js";
 
 dotenv.config();
 
@@ -276,7 +277,7 @@ async function startBot() {
       
       if (cmd) {
         
-        if (cmd.isOwner && senderId !== myId) {
+        if (cmd.isOwner && senderId !== settings.ownerId) {
           await msg.reply({ message: "❌ Este comando solo puede usarlo el owner." });
           return;
         }
