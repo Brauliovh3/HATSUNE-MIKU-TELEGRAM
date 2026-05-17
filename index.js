@@ -56,7 +56,7 @@ const client = new TelegramClient(
 
 if (botToken && botToken.length > 10) {
   await client.start({ botAuthToken: botToken });
-  
+  client.setLogLevel("error");
   console.log("💙 HATSUNE MIKU BOT ONLINE (Token) 💙");
   startBot();
 } else if (sessionString.length > 5) {
@@ -247,9 +247,22 @@ async function startBot() {
     const cmdName = match[1].toLowerCase();
     const args = match[2] ? match[2].trim().split(/\s+/) : [];
 
-    const isOwn = senderId === myId;
-    const origen = isOwn ? "YO" : `ID:${senderId}`;
-    console.log(`📩 [${new Date().toLocaleTimeString()}] [${origen}] Chat:${chatId} → ${text}`);
+    // Obtener información extendida para el log
+    const sender = await msg.getSender();
+    const chat = await msg.getChat();
+    const userName = sender ? (sender.username ? `@${sender.username}` : `${sender.firstName || ''} ${sender.lastName || ''}`.trim()) : 'Desconocido';
+    const chatName = chat.title || 'Chat Privado';
+    const time = new Date().toLocaleTimeString();
+
+    console.log(`
+┌──────────────────────────────────────────────────────────┐
+│ 📩 COMANDO RECIBIDO                                      │
+├──────────────────────────────────────────────────────────┤
+│ 👤 USUARIO : ${userName.padEnd(43)}│
+│ 💬 GRUPO   : ${chatName.toString().substring(0, 42).padEnd(43)}│
+│ ⌨️ COMANDO  : ${text.substring(0, 42).padEnd(43)}│
+│ ⏰ HORA     : ${time.padEnd(43)}│
+└──────────────────────────────────────────────────────────┘`);
 
    
     if (global.commands) {
