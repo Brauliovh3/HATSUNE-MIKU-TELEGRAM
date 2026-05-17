@@ -289,35 +289,41 @@ async function startBot() {
             senderId,
             me,
             myId,
-            reply: async (options) => {
-              const opts = typeof options === 'string' ? { message: options } : { ...options };
+            reply: async (textOrOpts, maybeOpts = {}) => {
+              const opts = typeof textOrOpts === 'string' ? { message: textOrOpts, ...maybeOpts } : { ...textOrOpts };
               if (opts.parse_mode || opts.parseMode) {
                 const pm = (opts.parse_mode || opts.parseMode).toLowerCase();
                 opts.parseMode = pm === 'markdown' ? 'md' : pm;
-                delete opts.parse_mode;
               }
               if (opts.caption && !opts.message) opts.message = opts.caption;
-              return await client.sendMessage(msg.peerId, opts);
+              return await client.sendMessage(msg.peerId, {
+                ...opts,
+                buttons: opts.buttons || (opts.replyMarkup?.inlineKeyboard)
+              });
             },
-            replyWithVideo: async (video, opts = {}) => {
-              const sendOpts = { ...opts, file: video.source || video };
+            replyWithVideo: async (video, options = {}) => {
+              const sendOpts = { ...options, file: video.source || video };
               if (sendOpts.parse_mode || sendOpts.parseMode) {
                 const pm = (sendOpts.parse_mode || sendOpts.parseMode).toLowerCase();
                 sendOpts.parseMode = pm === 'markdown' ? 'md' : pm;
-                delete sendOpts.parse_mode;
               }
               if (sendOpts.caption) sendOpts.message = sendOpts.caption;
-              return await client.sendFile(msg.peerId, sendOpts);
+              return await client.sendFile(msg.peerId, {
+                ...sendOpts,
+                buttons: sendOpts.buttons || (sendOpts.replyMarkup?.inlineKeyboard)
+              });
             },
-            replyWithPhoto: async (photo, opts = {}) => {
-              const sendOpts = { ...opts, file: photo.source || photo };
+            replyWithPhoto: async (photo, options = {}) => {
+              const sendOpts = { ...options, file: photo.source || photo };
               if (sendOpts.parse_mode || sendOpts.parseMode) {
                 const pm = (sendOpts.parse_mode || sendOpts.parseMode).toLowerCase();
                 sendOpts.parseMode = pm === 'markdown' ? 'md' : pm;
-                delete sendOpts.parse_mode;
               }
               if (sendOpts.caption) sendOpts.message = sendOpts.caption;
-              return await client.sendFile(msg.peerId, sendOpts);
+              return await client.sendFile(msg.peerId, {
+                ...sendOpts,
+                buttons: sendOpts.buttons || (sendOpts.replyMarkup?.inlineKeyboard)
+              });
             },
             from: msg.sender || await msg.getSender(),
             message: msg

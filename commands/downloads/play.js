@@ -70,15 +70,9 @@ export default {
         const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
         
        
-        await ctx.client.sendFile(ctx.chatId, {
-          file: thumbnailUrl,
-          caption: `🎵 *VIDEO ENCONTRADO* 🎵
-
-📝 *Título:* ${title}
-🆔 *ID:* ${videoId}
-
-📥 *Elige formato para descargar:*`,
-          parseMode: 'markdown',
+        await ctx.replyWithPhoto(thumbnailUrl, {
+          caption: `🎵 *VIDEO ENCONTRADO* 🎵\n\n📝 *Título:* ${title}\n🆔 *ID:* ${videoId}\n\n📥 *Elige formato para descargar:*`,
+          parseMode: 'md',
           ...global.Markup.inlineKeyboard([
             [global.Markup.button.callback('🎵 Audio MP3', `audio_${videoId}`), global.Markup.button.callback('🎥 Video MP4', `video_${videoId}`)],
             [global.Markup.button.callback('🎼 Audio WAV', `wav_${videoId}`), global.Markup.button.callback('🎬 Video AVI', `avi_${videoId}`)],
@@ -88,7 +82,7 @@ export default {
             [global.Markup.button.callback('🎵 Audio OGG', `ogg_${videoId}`), global.Markup.button.callback('🎥 Video M4V', `m4v_${videoId}`)]
           ])
         });
-        
+
       } catch (infoError) {
         const message = `🎵 *VIDEO ENCONTRADO* 🎵
 
