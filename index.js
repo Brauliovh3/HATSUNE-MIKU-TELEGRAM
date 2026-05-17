@@ -239,12 +239,21 @@ async function startBot() {
     const chatId = msg.chatId;
     const senderId = msg.senderId?.toString();
 
-    // Detecta comandos con o sin espacios: ".play" o ". play"
+    // Detecta comandos (".play") o respuestas numéricas directas ("1")
+    let cmdName, args;
     const match = text.match(/^\.\s*([a-zA-Z0-9]+)(?:\s+(.*))?$/s);
-    if (!match) return;
 
-    const cmdName = match[1].toLowerCase();
-    const args = match[2] ? match[2].trim().split(/\s+/) : [];
+    if (match) {
+      cmdName = match[1].toLowerCase();
+      args = match[2] ? match[2].trim().split(/\s+/) : [];
+    } else if (/^[1-4]$/.test(text)) {
+      // Si es una respuesta a un mensaje del propio bot
+      const repliedMsg = await msg.getReplyMessage();
+      if (repliedMsg && repliedMsg.senderId?.toString() === myId) {
+        cmdName = 'play';
+        args = [text];
+      } else { return; }
+    } else { return; }
 
   
     const sender = await msg.getSender();

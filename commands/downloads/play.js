@@ -13,13 +13,28 @@ export default {
   middlewares: [],
   cooldown: 5,
   async run(ctx, args) {
+    const userId = ctx.senderId;
+    if (!global.db.data.users[userId]) global.db.data.users[userId] = { coins: 0, usedcommands: 0 };
+    const user = global.db.data.users[userId];
+
     if (!args || args.length === 0) {
-      return ctx.reply('🎵 USO: .play <titulo o URL de YouTube>\n📝 Ejemplo:* .play Despacito\n📝 Ejemplo: .play https://youtube.com/watch?v=...');
+      return ctx.reply('**🎵 USO:** .play <titulo o URL>\n**📝 Ejemplo:** .play Despacito\n**💡 Opciones:** Responde con el número de opción.');
     }
 
-
+    
     if (args.length === 1 && /^[1-4]$/.test(args[0])) {
-      return ctx.reply('📋 *Opciones de descarga:*\n\n1️⃣ *Audio MP3*\n2️⃣ *Video MP4*\n3️⃣ *Audio WAV*\n4️⃣ *Video AVI*\n\n💡 *Responde con un numero o busca con texto!*');
+      const lastId = user.lastVideoId;
+      if (!lastId) return ctx.reply('**❌ Primero busca una canción o video.**');
+      
+      const num = args[0];
+      const selectionMap = {
+        '1': `audio_${lastId}`,
+        '2': `video_${lastId}`,
+        '3': `wav_${lastId}`,
+        '4': `avi_${lastId}`
+      };
+      
+      return this.callback(ctx, selectionMap[num]);
     }
 
     const query = args.join(' ');
@@ -50,34 +65,27 @@ export default {
         videoId = videoIdMatch[1];
       }
 
+      user.lastVideoId = videoId;
+
       if (!videoId) {
         return ctx.reply('❌ No se encontró el video');
       }
 
       try {
-        const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
-        const response = await axios.get(videoUrl, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          }
-        });
-        
-        const titleMatch = response.data.match(/<title>([^<]+)<\/title>/);
-        if (titleMatch) {
-          title = titleMatch[1].replace(' - YouTube', '');
-        }
-        
         const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
         
-       
         await ctx.replyWithPhoto(thumbnailUrl, {
-          caption: `🎵 *RESULTADO DE BÚSQUEDA* 🎵\n\n📝 *Título:* ${title}\n🆔 *ID:* ${videoId}\n\n📥 *Selecciona un formato:*`,
+          caption: `✨ **YOUTUBE PLAY** ✨\n\n🆔 **ID:** ${videoId}\n\n📥 **Selecciona o responde con el número:**\n1️⃣ Audio MP3\n2️⃣ Video MP4\n3️⃣ Audio WAV\n4️⃣ Video AVI\n\n💙 **Hatsune Miku Bot**`,
           parseMode: 'md', 
           ...global.Markup.inlineKeyboard([
-            [global.Markup.button.callback('🎵 MP3', `audio_${videoId}`), global.Markup.button.callback('🎥 MP4', `video_${videoId}`), global.Markup.button.callback('🎼 WAV', `wav_${videoId}`)],
-            [global.Markup.button.callback('🎬 AVI', `avi_${videoId}`), global.Markup.button.callback('📹 MOV', `mov_${videoId}`), global.Markup.button.callback('🎞️ MKV', `mkv_${videoId}`)],
-            [global.Markup.button.callback('🎧 FLAC', `flac_${videoId}`), global.Markup.button.callback('🎵 AAC', `aac_${videoId}`), global.Markup.button.callback('📽️ WEBM', `webm_${videoId}`)],
-            [global.Markup.button.callback('🎥 3GP', `3gp_${videoId}`), global.Markup.button.callback('🎵 OGG', `ogg_${videoId}`), global.Markup.button.callback('🎥 M4V', `m4v_${videoId}`)]
+            [
+              global.Markup.button.callback('🎵 MP3', `audio_${videoId}`), 
+              global.Markup.button.callback('🎥 MP4', `video_${videoId}`)
+            ],
+            [
+              global.Markup.button.callback('🎼 WAV', `wav_${videoId}`), 
+              global.Markup.button.callback('🎬 AVI', `avi_${videoId}`)
+            ]
           ])
         });
       } catch (infoError) {
@@ -107,78 +115,40 @@ export default {
   async callback(ctx, callbackData) {
     try {
       const data = callbackData.toString();
-      
-      
-      if (/^[1-4]$/.test(data)) {
-        const formatMap = {
-          '1': { name: 'Audio MP3', api: 'ytmp3', format: 'audio' },
-          '2': { name: 'Video MP4', api: 'ytmp4', format: 'video' },
-          '3': { name: 'Audio WAV', api: 'ytmp3', format: 'wav' },
-          '4': { name: 'Video AVI', api: 'ytmp4', format: 'avi' }
-        };
-        
-        const selectedFormat = formatMap[data];
-        if (selectedFormat) {
-         
-          const simulatedData = `${selectedFormat.format}_${ctx.lastVideoId || 'default'}`;
-          return this.callback(ctx, simulatedData);
-        }
-      }
-      
-      
-      if (data.includes('_')) {
-        const parts = data.split('_');
-        ctx.lastVideoId = parts[1];
-      }
-      
+      const [formatRequested, videoId] = data.split('_');
+
       const formats = {
         'audio': { name: 'Audio MP3', api: 'ytmp3' },
         'video': { name: 'Video MP4', api: 'ytmp4' },
         'wav': { name: 'Audio WAV', api: 'ytmp3' },
-        'avi': { name: 'Video AVI', api: 'ytmp4' },
-        'mov': { name: 'Video MOV', api: 'ytmp4' },
-        'mkv': { name: 'Video MKV', api: 'ytmp4' },
-        'flac': { name: 'Audio FLAC', api: 'ytmp3' },
-        'aac': { name: 'Audio AAC', api: 'ytmp3' },
-        'webm': { name: 'Video WEBM', api: 'ytmp4' },
-        '3gp': { name: 'Video 3GP', api: 'ytmp4' },
-        'ogg': { name: 'Audio OGG', api: 'ytmp3' },
-        'm4v': { name: 'Video M4V', api: 'ytmp4' }
+        'avi': { name: 'Video AVI', api: 'ytmp4' }
       };
-      
-      let formatFound = null;
-      let actualVideoId = null;
-      
-      for (const [format, info] of Object.entries(formats)) {
-        if (data.startsWith(`${format}_`)) {
-          formatFound = format;
-          actualVideoId = data.replace(`${format}_`, '');
-          ctx.lastVideoId = actualVideoId;
-          break;
-        }
-      }
-      
-      if (formatFound && formats[formatFound]) {
-        const formatInfo = formats[formatFound];
+
+      const formatInfo = formats[formatRequested];
+      if (formatInfo && videoId) {
         
         await ctx.answerCallbackQuery({
-          text: `⏳ *Preparando descarga de ${formatInfo.name}...*`,
+          text: `⏳ Preparando ${formatInfo.name}...`,
           showAlert: true
         });
 
-        const apiUrl = `${process.env.YOUTUBE_API_URL}/dl/${formatInfo.api}?url=https://youtu.be/${actualVideoId}&key=${process.env.YOUTUBE_API_KEY}`;
+        const apiUrl = `https://api.alyacore.xyz/dl/${formatInfo.api}?url=https://youtu.be/${videoId}&key=DEPOOL-key60015091`;
         
         const apiResponse = await axios.get(apiUrl);
         
-        if (apiResponse.data.status && apiResponse.data.data) {
-          const downloadUrl = apiResponse.data.data.dl;
-          const fileName = apiResponse.data.data.fileName;
+        if (apiResponse.data.status) {
+          const isVideo = formatInfo.api === 'ytmp4';
+          const dlData = isVideo ? apiResponse.data.result : apiResponse.data.data;
+          
+          const downloadUrl = isVideo ? dlData.downloadUrl : dlData.dl;
+          const fileName = isVideo ? `${dlData.title}.mp4` : dlData.fileName;
           
           const fileResponse = await axios.get(downloadUrl, {
             responseType: 'stream'
           });
           
-          const filePath = path.join('./temp', fileName);
+          const cleanFileName = (fileName || `yt_${Date.now()}`).replace(/[^a-zA-Z0-9.]/g, '_');
+          const filePath = path.join('./temp', cleanFileName);
           const fileWriter = fs.createWriteStream(filePath);
           fileResponse.data.pipe(fileWriter);
           
@@ -187,11 +157,11 @@ export default {
             fileWriter.on('error', reject);
           });
           
-       
           await ctx.client.sendFile(ctx.chatId, {
             file: filePath,
-            caption: `✅ *${formatInfo.name} descargado*`,
-            replyTo: ctx.message
+            caption: `✅ **${formatInfo.name} descargado**\n\n💙 **Hatsune Miku Bot**`,
+            parseMode: 'markdown',
+            supportsStreaming: isVideo
           });
           
           setTimeout(() => {

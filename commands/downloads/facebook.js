@@ -1,4 +1,6 @@
 import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
 
 export default {
   command: ['facebook', 'fb'],
@@ -14,7 +16,7 @@ export default {
     const url = args[0];
     const userId = ctx.senderId;
     
-    // Ensure database is initialized
+   
     if (!global.db.data) {
       global.db.data = { users: {}, chats: {}, settings: {}, cooldowns: {} };
     }
@@ -60,16 +62,29 @@ export default {
       const videoUrl = data.hd_url || data.sd_url;
       const quality = data.hd_url ? 'HD' : 'SD';
 
+      const tempPath = path.join('./temp', `fb_${Date.now()}.mp4`);
+      const writer = fs.createWriteStream(tempPath);
+
       const videoResponse = await axios.get(videoUrl, {
         responseType: 'stream',
         timeout: 30000
       });
 
+      videoResponse.data.pipe(writer);
+      await new Promise((res, rej) => {
+        writer.on('finish', res);
+        writer.on('error', rej);
+      });
+
       await ctx.client.sendFile(ctx.chatId, {
-        file: videoResponse.data,
+        file: tempPath,
+        mimeType: 'video/mp4',
+        supportsStreaming: true,
         caption: `✨ **FACEBOOK DOWNLOAD** ✨\n\n🎥 **Calidad:** ${quality}\n💰 **Costo:** ${cost} ${process.env.CURRENCY || 'Coins'}\n📊 **Saldo:** ${user.coins} ${process.env.CURRENCY || 'Coins'}\n\n💙 **Hatsune Miku Bot**`,
         parseMode: 'markdown'
       });
+
+      try { fs.unlinkSync(tempPath); } catch (e) {}
 
     } catch (error) {
       console.error('Error en facebook:', error);

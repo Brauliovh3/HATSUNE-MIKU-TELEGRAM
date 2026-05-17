@@ -1,4 +1,6 @@
 import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
 
 export default {
   command: ['instagram', 'ig'],
@@ -12,7 +14,7 @@ export default {
     const url = args[0];
     const userId = ctx.senderId;
     
-    // Ensure database is initialized
+    
     if (!global.db.data) {
       global.db.data = { users: {}, chats: {}, settings: {}, cooldowns: {} };
     }
