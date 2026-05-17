@@ -13,6 +13,24 @@ dotenv.config();
 
 const apiId = parseInt(process.env.API_ID);
 const apiHash = process.env.API_HASH;
+const botToken = process.env.BOT_TOKEN;
+
+
+global.Markup = {
+  inlineKeyboard: (btns) => ({ 
+    buttons: btns.map(row => 
+      Array.isArray(row) ? row.map(b => {
+        if (b.url) return new Api.KeyboardButtonUrl({ text: b.text, url: b.url });
+        if (b.callback_data) return new Api.KeyboardButtonCallback({ text: b.text, data: Buffer.from(b.callback_data) });
+        return b;
+      }) : []
+    )
+  }),
+  button: {
+    url: (text, url) => ({ text, url }),
+    callback: (text, callback_data) => ({ text, callback_data })
+  }
+};
 
 
 let sessionString = "";
@@ -42,15 +60,19 @@ const client = new TelegramClient(
   { connectionRetries: 5 }
 );
 
-await client.connect();
-
 console.log("=================================");
-console.log("💙 HATSUNE MIKU USERBOT 💙");
+console.log("💙 HATSUNE MIKU BOT 💙");
 console.log("=================================\n");
 
-if (sessionString.length > 5) {
+if (botToken && botToken.length > 10) {
+  console.log("🤖 Iniciando como BOT con Token de BotFather...");
+  await client.start({ botAuthToken: botToken });
+  console.log("✅ Bot conectado exitosamente\n");
+  startBot();
+} else if (sessionString.length > 5) {
   console.log("✅ Sesión encontrada");
-  console.log("🤖 Userbot conectado\n");
+  await client.connect();
+  console.log("👤 Userbot conectado\n");
   startBot();
 } else {
   console.log("1 => Login por código (recomendado en servidor)");
@@ -269,10 +291,19 @@ async function startBot() {
             me,
             myId,
             reply: async (options) => {
-              if (typeof options === 'string') {
-                return await msg.reply({ message: options });
+              const opts = typeof options === 'string' ? { message: options } : { ...options };
+              if (opts.parse_mode) {
+                opts.parseMode = opts.parse_mode.toLowerCase();
+                delete opts.parse_mode;
               }
-              return await msg.reply(options);
+              if (opts.caption && !opts.message) opts.message = opts.caption;
+              return await client.sendMessage(chatId, opts);
+            },
+            replyWithVideo: async (video, opts = {}) => {
+              const sendOpts = { ...opts, file: video.source || video };
+              if (sendOpts.parse_mode) sendOpts.parseMode = sendOpts.parse_mode.toLowerCase();
+              if (sendOpts.caption) sendOpts.message = sendOpts.caption;
+              return await client.sendFile(chatId, sendOpts);
             },
             from: msg.sender || await msg.getSender(),
             message: msg

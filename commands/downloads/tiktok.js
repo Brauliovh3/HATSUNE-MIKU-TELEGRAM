@@ -10,6 +10,12 @@ export default {
     }
 
     const url = args[0];
+    const userId = ctx.senderId;
+    if (!global.db.data.users) global.db.data.users = {};
+    if (!global.db.data.users[userId]) global.db.data.users[userId] = { coins: 0, usedcommands: 0 };
+    
+    const user = global.db.data.users[userId];
+    const cost = 10;
 
     if (!url.includes('tiktok.com')) {
       return ctx.reply('❌ Por favor proporciona una URL válida de TikTok');
@@ -34,7 +40,10 @@ export default {
         return ctx.reply('❌ No se pudo descargar el video. Intenta con otra URL.');
       }
 
-   
+      if (user.coins < cost) {
+        return ctx.reply(`❌ No tienes suficientes 🌱 Cebollines\n💰 Costo: ${cost} 🌱 Cebollines\n📊 Tienes: ${user.coins} 🌱 Cebollines`);
+      }
+
       user.coins = (user.coins || 0) - cost;
       user.usedcommands = (user.usedcommands || 0) + 1;
 

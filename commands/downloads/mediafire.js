@@ -12,15 +12,15 @@ export default {
     const url = args[0];
     const userId = ctx.senderId;
     
-    // Ensure database is initialized
+  
     if (!global.db.data) {
       global.db.data = { users: {}, chats: {}, settings: {}, cooldowns: {} };
     }
     if (!global.db.data.users) {
       global.db.data.users = {};
     }
-    
-    const user = global.db.data.users[userId] || { coins: 0 };
+    if (!global.db.data.users[userId]) global.db.data.users[userId] = { coins: 0, usedcommands: 0 };
+    const user = global.db.data.users[userId];
     
     
     const cost = 15;
@@ -57,7 +57,7 @@ export default {
         return ctx.reply('❌ No se pudo obtener el enlace de descarga. El archivo puede haber sido eliminado.');
       }
 
-      // Descontar monedas
+      
       user.coins = (user.coins || 0) - cost;
       user.usedcommands = (user.usedcommands || 0) + 1;
 
@@ -74,10 +74,8 @@ export default {
 
       await ctx.reply(message, {
         parse_mode: 'Markdown',
-        ...Markup.inlineKeyboard([
-          [
-            Markup.button.url('📥 DESCARGAR DIRECTO', data.download_url)
-          ]
+        ...global.Markup.inlineKeyboard([
+          [global.Markup.button.url('📥 DESCARGAR DIRECTO', data.download_url)]
         ])
       });
 
