@@ -6,7 +6,7 @@ export default {
   description: 'Descargar posts de Instagram',
   async run(ctx, args) {
     if (!args || args.length === 0) {
-      return ctx.reply('📷 *USO:* /instagram <URL de Instagram>\n📝 *Ejemplo:* /instagram https://www.instagram.com/p/...');
+      return ctx.reply('📷 **USO:** /instagram <URL de Instagram>\n📝 **Ejemplo:** /instagram https://www.instagram.com/p/...');
     }
 
     const url = args[0];
@@ -33,7 +33,7 @@ export default {
     }
 
     try {
-      await ctx.reply('⏳ *Procesando post de Instagram...*');
+      await ctx.reply('⏳ **Procesando post de Instagram...**');
 
     
       const apiUrl = `https://api.instagramdownloader.com/download?url=${encodeURIComponent(url)}`;
@@ -66,8 +66,8 @@ export default {
         await ctx.replyWithVideo({ 
           source: videoResponse.data 
         }, {
-          caption: `📷 *Instagram Descargado* 📷\n\n💰 Costo: ${cost} 🌱 Cebollines\n📊 Tus Cebollines: ${user.coins} 🌱 Cebollines\n\n💙 Descargado por Hatsune Miku Bot`,
-          parse_mode: 'Markdown'
+          caption: `✨ **INSTAGRAM DOWNLOAD** ✨\n\n💰 **Costo:** ${cost} ${process.env.CURRENCY || 'Coins'}\n📊 **Saldo:** ${user.coins} ${process.env.CURRENCY || 'Coins'}\n\n💙 **Hatsune Miku Bot**`,
+          parseMode: 'markdown'
         });
       } else if (data.image_url) {
          const imageResponse = await axios.get(data.image_url, {
@@ -78,8 +78,8 @@ export default {
         await ctx.replyWithPhoto({ 
           source: imageResponse.data 
         }, {
-          caption: `📷 *Instagram Descargado* 📷\n\n💰 Costo: ${cost} 🌱 Cebollines\n📊 Tus Cebollines: ${user.coins} 🌱 Cebollines\n\n💙 Descargado por Hatsune Miku Bot`,
-          parse_mode: 'Markdown'
+          caption: `✨ **INSTAGRAM DOWNLOAD** ✨\n\n💰 **Costo:** ${cost} ${process.env.CURRENCY || 'Coins'}\n📊 **Saldo:** ${user.coins} ${process.env.CURRENCY || 'Coins'}\n\n💙 **Hatsune Miku Bot**`,
+          parseMode: 'markdown'
         });
       }
 

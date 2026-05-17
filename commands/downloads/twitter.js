@@ -8,7 +8,7 @@ export default {
   cooldown: 5,
   async run(ctx, args) {
     if (!args || args.length === 0) {
-      return ctx.reply('🐦 *USO:* .twitter <URL de Twitter/X>\n📝 *Ejemplo:* .twitter https://twitter.com/user/status/...');
+      return ctx.reply('🐦 **USO:** .twitter <URL de Twitter/X>\n📝 **Ejemplo:** .twitter https://twitter.com/user/status/...');
     }
 
     const url = args[0];
@@ -34,7 +34,7 @@ export default {
     }
 
     try {
-      await ctx.reply('⏳ *Procesando contenido de Twitter/X...*');
+      await ctx.reply('⏳ **Procesando contenido de Twitter/X...**');
 
       const apiUrl = `https://api.twitterdownloader.com/download?url=${encodeURIComponent(url)}`;
       
@@ -67,7 +67,7 @@ export default {
 
         await ctx.client.sendFile(ctx.chatId, {
           file: videoResponse.data,
-          caption: `🐦 *Twitter/X Descargado* 🐦\n\n💰 Costo: ${cost} 🌱 Cebollines\n📊 Tus Cebollines: ${user.coins} 🌱 Cebollines\n\n💙 Descargado por Hatsune Miku Bot`,
+          caption: `✨ **TWITTER/X DOWNLOAD** ✨\n\n💰 **Costo:** ${cost} ${process.env.CURRENCY || 'Coins'}\n📊 **Saldo:** ${user.coins} ${process.env.CURRENCY || 'Coins'}\n\n💙 **Hatsune Miku Bot**`,
           parseMode: 'markdown'
         });
       } else if (data.images && data.images.length > 0) {
@@ -81,7 +81,7 @@ export default {
 
           await ctx.client.sendFile(ctx.chatId, {
             file: imageResponse.data,
-            caption: i === 0 ? `🐦 *Twitter/X Descargado* 🐦\n\n💰 Costo: ${cost} 🌱 Cebollines\n📊 Tus Cebollines: ${user.coins} 🌱 Cebollines\n\n💙 Descargado por Hatsune Miku Bot` : null,
+            caption: i === 0 ? `✨ **TWITTER/X DOWNLOAD** ✨\n\n💰 **Costo:** ${cost} ${process.env.CURRENCY || 'Coins'}\n📊 **Saldo:** ${user.coins} ${process.env.CURRENCY || 'Coins'}\n\n💙 **Hatsune Miku Bot**` : null,
             parseMode: 'markdown'
           });
         }

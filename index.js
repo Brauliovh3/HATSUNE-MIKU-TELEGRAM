@@ -285,37 +285,28 @@ async function startBot() {
             myId,
             reply: async (textOrOpts, maybeOpts = {}) => {
               const opts = typeof textOrOpts === 'string' ? { message: textOrOpts, ...maybeOpts } : { ...textOrOpts };
-              if (opts.parse_mode || opts.parseMode) {
-                const pm = (opts.parse_mode || opts.parseMode).toLowerCase();
-                opts.parseMode = pm === 'markdown' ? 'md' : pm;
-              }
-              if (opts.caption && !opts.message) opts.message = opts.caption;
+              const pm = (opts.parseMode || opts.parse_mode || 'markdown').toLowerCase();
+              const parseMode = (pm === 'markdown' || pm === 'md') ? 'md' : pm;
               return await client.sendMessage(msg.peerId, {
-                ...opts,
+                ...opts, parseMode,
                 buttons: opts.buttons || (opts.replyMarkup?.inlineKeyboard)
               });
             },
             replyWithVideo: async (video, options = {}) => {
               const sendOpts = { ...options, file: video.source || video };
-              if (sendOpts.parse_mode || sendOpts.parseMode) {
-                const pm = (sendOpts.parse_mode || sendOpts.parseMode).toLowerCase();
-                sendOpts.parseMode = pm === 'markdown' ? 'md' : pm;
-              }
-              if (sendOpts.caption) sendOpts.message = sendOpts.caption;
+              const pm = (sendOpts.parseMode || sendOpts.parse_mode || 'markdown').toLowerCase();
+              const parseMode = (pm === 'markdown' || pm === 'md') ? 'md' : pm;
               return await client.sendFile(msg.peerId, {
-                ...sendOpts,
+                ...sendOpts, parseMode,
                 buttons: sendOpts.buttons || (sendOpts.replyMarkup?.inlineKeyboard)
               });
             },
             replyWithPhoto: async (photo, options = {}) => {
               const sendOpts = { ...options, file: photo.source || photo };
-              if (sendOpts.parse_mode || sendOpts.parseMode) {
-                const pm = (sendOpts.parse_mode || sendOpts.parseMode).toLowerCase();
-                sendOpts.parseMode = pm === 'markdown' ? 'md' : pm;
-              }
-              if (sendOpts.caption) sendOpts.message = sendOpts.caption;
+              const pm = (sendOpts.parseMode || sendOpts.parse_mode || 'markdown').toLowerCase();
+              const parseMode = (pm === 'markdown' || pm === 'md') ? 'md' : pm;
               return await client.sendFile(msg.peerId, {
-                ...sendOpts,
+                ...sendOpts, parseMode,
                 buttons: sendOpts.buttons || (sendOpts.replyMarkup?.inlineKeyboard)
               });
             },

@@ -25,7 +25,7 @@ export default {
       }
 
       if (!targetMedia) {
-        return ctx.reply('💙 Responde a una imagen o envía una imagen con el comando\n📝 Ejemplo: .s respondiendo a una imagen');
+        return ctx.reply('**💙 Responde a una imagen o envía una imagen con el comando**\n📝 **Ejemplo: .s respondiendo a una imagen**');
       }
 
       
@@ -65,7 +65,7 @@ export default {
 
     } catch (error) {
       console.error('Error en comando sticker:', error);
-      await ctx.reply('❌ Error al crear el sticker. Asegúrate de responder a una imagen válida.');
+      await ctx.reply('**❌ Error al crear el sticker. Asegúrate de responder a una imagen válida.**');
     }
   }
 };

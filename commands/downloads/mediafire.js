@@ -6,7 +6,7 @@ export default {
   description: 'Descargar archivos de MediaFire',
   async run(ctx, args) {
     if (!args || args.length === 0) {
-      return ctx.reply('📁 *USO:* /mediafire <URL de MediaFire>\n📝 *Ejemplo:* /mediafire https://www.mediafire.com/file/...');
+      return ctx.reply('📁 **USO:** /mediafire <URL de MediaFire>\n📝 **Ejemplo:** /mediafire https://www.mediafire.com/file/...');
     }
 
     const url = args[0];
@@ -33,7 +33,7 @@ export default {
     }
 
     try {
-      await ctx.reply('⏳ *Procesando archivo de MediaFire...*');
+      await ctx.reply('⏳ **Procesando archivo de MediaFire...**');
 
       
       const fileId = url.match(/\/file\/([a-zA-Z0-9]+)/)?.[1];
@@ -61,19 +61,15 @@ export default {
       user.coins = (user.coins || 0) - cost;
       user.usedcommands = (user.usedcommands || 0) + 1;
 
-      const message = `📁 *ARCHIVO ENCONTRADO* 📁
-
-📝 *Nombre:* ${data.filename || 'Archivo MediaFire'}
-📦 *Tamaño:* ${data.filesize || 'Desconocido'}
-🔗 *Descarga:* ${data.download_url}
-
-💰 Costo: ${cost} 🌱 Cebollines
-📊 Tus Cebollines: ${user.coins} 🌱 Cebollines
-
-⚠️ *Nota:* Para archivos muy grandes, es posible que no se puedan enviar directamente por Telegram. Usa el enlace de descarga.`;
+      const message = `✨ **MEDIAFIRE DOWNLOAD**\n\n` +
+                      `📝 **Nombre:** ${data.filename || 'Archivo'}\n` +
+                      `📦 **Tamaño:** ${data.filesize || 'Desconocido'}\n` +
+                      `💰 **Costo:** ${cost} ${process.env.CURRENCY || 'Coins'}\n` +
+                      `📊 **Saldo:** ${user.coins} ${process.env.CURRENCY || 'Coins'}\n\n` +
+                      `🔗 **Link:** ${data.download_url}`;
 
       await ctx.reply(message, {
-        parseMode: 'md',
+        parseMode: 'markdown',
         ...global.Markup.inlineKeyboard([
           [global.Markup.button.url('📥 DESCARGAR DIRECTO', data.download_url)]
         ])

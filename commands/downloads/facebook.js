@@ -8,7 +8,7 @@ export default {
   cooldown: 5,
   async run(ctx, args) {
     if (!args || args.length === 0) {
-      return ctx.reply('📘 *USO:* .facebook <URL de Facebook>\n📝 *Ejemplo:* .facebook https://www.facebook.com/watch/...');
+      return ctx.reply('📘 **USO:** .facebook <URL de Facebook>\n📝 **Ejemplo:** .facebook https://www.facebook.com/watch/...');
     }
 
     const url = args[0];
@@ -34,7 +34,7 @@ export default {
     }
 
     try {
-      await ctx.reply('⏳ *Procesando video de Facebook...*');
+      await ctx.reply('⏳ **Procesando video de Facebook...**');
 
       const apiUrl = `https://api.facebookdownloader.com/download?url=${encodeURIComponent(url)}`;
       
@@ -67,7 +67,7 @@ export default {
 
       await ctx.client.sendFile(ctx.chatId, {
         file: videoResponse.data,
-        caption: `📘 *Facebook Descargado* 📘\n\n🎥 *Calidad:* ${quality}\n💰 Costo: ${cost} 🌱 Cebollines\n📊 Tus Cebollines: ${user.coins} 🌱 Cebollines\n\n💙 Descargado por Hatsune Miku Bot`,
+        caption: `✨ **FACEBOOK DOWNLOAD** ✨\n\n🎥 **Calidad:** ${quality}\n💰 **Costo:** ${cost} ${process.env.CURRENCY || 'Coins'}\n📊 **Saldo:** ${user.coins} ${process.env.CURRENCY || 'Coins'}\n\n💙 **Hatsune Miku Bot**`,
         parseMode: 'markdown'
       });
 

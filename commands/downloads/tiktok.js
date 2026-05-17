@@ -6,7 +6,7 @@ export default {
   description: 'Descargar videos de TikTok',
   async run(ctx, args) {
     if (!args || args.length === 0) {
-      return ctx.reply('📱 *USO:* /tiktok <URL de TikTok>\n📝 *Ejemplo:* /tiktok https://vm.tiktok.com/...');
+      return ctx.reply('📱 **USO:** /tiktok <URL de TikTok>\n📝 **Ejemplo:** /tiktok https://vm.tiktok.com/...');
     }
 
     const url = args[0];
@@ -21,34 +21,31 @@ export default {
       return ctx.reply('❌ Por favor proporciona una URL válida de TikTok');
     }
 
-    try {
-      await ctx.reply('⏳ *Procesando video de TikTok...*');
+    if (user.coins < cost) {
+      return ctx.reply(`❌ No tienes suficientes 🌱 Cebollines\n💰 Costo: ${cost} 🌱 Cebollines\n📊 Tienes: ${user.coins} 🌱 Cebollines`);
+    }
 
-      
-      const apiUrl = `https://api.tiktokdownload.com/api/download?url=${encodeURIComponent(url)}`;
+    try {
+      await ctx.reply('⏳ **Procesando video de TikTok...**');
+
+     
+      const apiUrl = `https://api.alyacore.xyz/dl/tiktok?url=${encodeURIComponent(url)}&key=DEPOOL-key60015091`;
       
       const response = await axios.get(apiUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        },
         timeout: 30000
       });
 
-      const data = response.data;
+      const res = response.data;
       
-      if (!data || !data.video_url) {
-        return ctx.reply('❌ No se pudo descargar el video. Intenta con otra URL.');
+      if (!res || !res.status || !res.data || !res.data.dl) {
+        return ctx.reply('❌ No se pudo descargar el video. Verifica el enlace o intenta con otra URL.');
       }
 
-      if (user.coins < cost) {
-        return ctx.reply(`❌ No tienes suficientes 🌱 Cebollines\n💰 Costo: ${cost} 🌱 Cebollines\n📊 Tienes: ${user.coins} 🌱 Cebollines`);
-      }
-
-      user.coins = (user.coins || 0) - cost;
+      const videoData = res.data;
+      user.coins -= cost;
       user.usedcommands = (user.usedcommands || 0) + 1;
 
-    
-      const videoResponse = await axios.get(data.video_url, {
+      const videoResponse = await axios.get(videoData.dl, {
         responseType: 'stream',
         timeout: 30000
       });
@@ -56,39 +53,13 @@ export default {
       await ctx.replyWithVideo({ 
         source: videoResponse.data 
       }, {
-        caption: `📱 *TikTok Descargado* 📱\n\n💰 Costo: ${cost} 🌱 Cebollines\n📊 Tus Cebollines: ${user.coins} 🌱 Cebollines\n\n💙 Descargado por Hatsune Miku Bot`,
-        parse_mode: 'Markdown'
+        caption: `✨ **TIKTOK DOWNLOAD** ✨\n\n📝 **Título:** ${videoData.title || 'Sin título'}\n💰 **Costo:** ${cost} ${process.env.CURRENCY || 'Coins'}\n📊 **Saldo:** ${user.coins} ${process.env.CURRENCY || 'Coins'}\n\n💙 **Hatsune Miku Bot**`,
+        parseMode: 'markdown'
       });
 
     } catch (error) {
       console.error('Error en tiktok:', error);
-      
-   
-      try {
-        await ctx.reply('⏳ *Intentando método alternativo...*');
-      
-        const altApiUrl = `https://tikmate.online/download?url=${encodeURIComponent(url)}`;
-        const altResponse = await axios.get(altApiUrl, { timeout: 30000 });
-        
-        if (altResponse.data && altResponse.data.video_url) {
-          const videoResponse = await axios.get(altResponse.data.video_url, {
-            responseType: 'stream',
-            timeout: 30000
-          });
-
-          await ctx.replyWithVideo({ 
-            source: videoResponse.data 
-          }, {
-            caption: `📱 *TikTok Descargado* 📱\n\n💙 Descargado por Hatsune Miku Bot`,
-            parse_mode: 'Markdown'
-          });
-        } else {
-          throw new Error('No se encontró video');
-        }
-      } catch (altError) {
-        console.error('Error en método alternativo:', altError);
-        await ctx.reply('❌ Error al descargar el video. Intenta con otra URL más tarde.');
-      }
+      await ctx.reply('❌ Error al descargar el video. Intenta con otra URL más tarde.');
     }
   }
 };
