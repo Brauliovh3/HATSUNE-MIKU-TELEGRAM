@@ -1,5 +1,4 @@
-import pkg from "telegram";
-const { TelegramClient, Api, events } = pkg;
+import { TelegramClient, Api, events } from "telegram";
 const { NewMessage, CallbackQuery } = events;
 import { StringSession } from "telegram/sessions/index.js";
 import QRCode from "qrcode";
@@ -54,8 +53,7 @@ const client = new TelegramClient(
 
 if (botToken && botToken.length > 10) {
   await client.start({ botAuthToken: botToken });
-  // Silenciar logs internos de GramJS (Reemplaza Logger.setLevel)
-  client.setLogLevel("error");
+  
   console.log("💙 HATSUNE MIKU BOT ONLINE (Token) 💙");
   startBot();
 } else if (sessionString.length > 5) {

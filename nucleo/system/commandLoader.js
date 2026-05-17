@@ -11,7 +11,7 @@ global.commands = new Map();
 
 const middlewares = {
   isOwner: (ctx, cmd) => {
-    if (cmd.isOwner && ctx.senderId !== ctx.me.id) {
+    if (cmd.isOwner && ctx.senderId !== ctx.myId) {
       ctx.reply({ message: '❌ Este comando solo puede usarlo el owner.' });
       return false;
     }
