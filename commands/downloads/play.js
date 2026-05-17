@@ -14,7 +14,7 @@ export default {
   cooldown: 5,
   async run(ctx, args) {
     if (!args || args.length === 0) {
-      return ctx.reply('🎵 *USO:* .play <titulo o URL de YouTube>\n📝 *Ejemplo:* .play Despacito\n📝 *Ejemplo:* .play https://youtube.com/watch?v=...');
+      return ctx.reply('🎵 USO: .play <titulo o URL de YouTube>\n📝 Ejemplo:* .play Despacito\n📝 Ejemplo: .play https://youtube.com/watch?v=...');
     }
 
 
@@ -33,7 +33,7 @@ export default {
       } else if (query.includes('youtu.be/')) {
         videoId = query.split('youtu.be/')[1]?.split('?')[0];
       } else {
-        await ctx.reply('🔍 *Buscando en YouTube...*');
+        await ctx.reply('🔍 Buscando en YouTube...');
         
         const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
         const searchResponse = await axios.get(searchUrl, {
@@ -79,55 +79,15 @@ export default {
 
 📥 *Elige formato para descargar:*`,
           parseMode: 'markdown',
-          buttons: [
-            [
-              { text: '🎵 Audio MP3', data: Buffer.from(`audio_${videoId}`) }
-            ],
-            [
-              { text: '🎥 Video MP4', data: Buffer.from(`video_${videoId}`) }
-            ],
-            [
-              { text: '🎼 Audio WAV', data: Buffer.from(`wav_${videoId}`) }
-            ],
-            [
-              { text: '🎬 Video AVI', data: Buffer.from(`avi_${videoId}`) }
-            ],
-            [
-              { text: '📹 Video MOV', data: Buffer.from(`mov_${videoId}`) }
-            ],
-            [
-              { text: '🎞️ Video MKV', data: Buffer.from(`mkv_${videoId}`) }
-            ],
-            [
-              { text: '🎧 Audio FLAC', data: Buffer.from(`flac_${videoId}`) }
-            ],
-            [
-              { text: '🎵 Audio AAC', data: Buffer.from(`aac_${videoId}`) }
-            ],
-            [
-              { text: '📽️ Video WEBM', data: Buffer.from(`webm_${videoId}`) }
-            ],
-            [
-              { text: '🎥 Video 3GP', data: Buffer.from(`3gp_${videoId}`) }
-            ],
-            [
-              { text: '🎵 Audio OGG', data: Buffer.from(`ogg_${videoId}`) }
-            ],
-            [
-              { text: '🎥 Video M4V', data: Buffer.from(`m4v_${videoId}`) }
-            ]
-          ]
+          ...global.Markup.inlineKeyboard([
+            [global.Markup.button.callback('🎵 Audio MP3', `audio_${videoId}`), global.Markup.button.callback('🎥 Video MP4', `video_${videoId}`)],
+            [global.Markup.button.callback('🎼 Audio WAV', `wav_${videoId}`), global.Markup.button.callback('🎬 Video AVI', `avi_${videoId}`)],
+            [global.Markup.button.callback('📹 Video MOV', `mov_${videoId}`), global.Markup.button.callback('🎞️ Video MKV', `mkv_${videoId}`)],
+            [global.Markup.button.callback('🎧 Audio FLAC', `flac_${videoId}`), global.Markup.button.callback('🎵 Audio AAC', `aac_${videoId}`)],
+            [global.Markup.button.callback('📽️ Video WEBM', `webm_${videoId}`), global.Markup.button.callback('🎥 Video 3GP', `3gp_${videoId}`)],
+            [global.Markup.button.callback('🎵 Audio OGG', `ogg_${videoId}`), global.Markup.button.callback('🎥 Video M4V', `m4v_${videoId}`)]
+          ])
         });
-        
-        setTimeout(() => {
-          try {
-           
-          
-            fs.unlinkSync(thumbnailPath);
-          } catch (e) {
-            
-          }
-        }, 5000);
         
       } catch (infoError) {
         const message = `🎵 *VIDEO ENCONTRADO* 🎵
@@ -139,17 +99,11 @@ export default {
 
         await ctx.reply({
           message: message,
-          parseMode: 'markdown',
-          replyMarkup: {
-            inlineKeyboard: [
-              [
-                { text: '🎵 Descargar Audio MP3', callbackData: `download_audio_${videoId}` }
-              ],
-              [
-                { text: '🎥 Descargar Video MP4', callbackData: `download_video_${videoId}` }
-              ]
-            ]
-          }
+          parse_mode: 'markdown',
+          ...global.Markup.inlineKeyboard([
+            [global.Markup.button.callback('🎵 Descargar Audio MP3', `audio_${videoId}`)],
+            [global.Markup.button.callback('🎥 Descargar Video MP4', `video_${videoId}`)]
+          ])
         });
       }
 

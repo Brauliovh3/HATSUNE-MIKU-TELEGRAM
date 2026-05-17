@@ -1,9 +1,7 @@
 import { TelegramClient } from "telegram";
 import { StringSession } from "telegram/sessions/index.js";
-import { NewMessage } from "telegram/events/index.js";
+import { NewMessage, CallbackQuery } from "telegram/events/index.js";
 import { Api } from "telegram";
-import pkg from 'telegram/events/index.js';
-const { CallbackQuery } = pkg;
 import QRCode from "qrcode";
 import input from "input";
 import fs from "fs";
@@ -328,8 +326,10 @@ async function startBot() {
 
   
   client.addEventHandler(async (event) => {
-    const data = event.query.data.toString();
-    console.log('Callback data:', data);
+    // En GramJS el evento recibido es directamente el objeto de la query
+    const query = event.query || event;
+    if (!query.data) return;
+    const data = query.data.toString();
 
  
     for (const [cmdName, cmd] of global.commands) {
@@ -337,14 +337,17 @@ async function startBot() {
         try {
           const ctx = {
             client,
-            query: event.query,
-            chatId: event.query.chatId,
-            senderId: event.query.senderId,
+            query: query,
+            chatId: query.peer?.toString(),
+            senderId: query.userId?.toString(),
             answerCallbackQuery: async (options) => {
-              if (typeof options === 'string') {
-                return await event.query.answer({ message: options });
-              }
-              return await event.query.answer(options);
+              const text = typeof options === 'string' ? options : options.text;
+              const alert = typeof options === 'object' ? (options.showAlert || options.alert) : false;
+              return await client.invoke(new Api.messages.SetBotCallbackAnswer({
+                queryId: query.queryId,
+                message: text,
+                alert: alert
+              }));
             }
           };
           
@@ -352,14 +355,19 @@ async function startBot() {
           return;
         } catch (e) {
           console.error(`❌ Error en callback ${cmdName}:`, e.message);
-          await event.query.answer({ 
-            text: "❌ Error al procesar la acción.", 
-            showAlert: true 
-          });
+          try {
+            await client.invoke(new Api.messages.SetBotCallbackAnswer({
+              queryId: query.queryId,
+              message: "❌ Error al procesar la acción.",
+              alert: true
+            }));
+          } catch (err) {
+            // Ignorar si no se puede responder
+          }
         }
       }
     }
-  }, CallbackQuery({}));
+  }, new CallbackQuery({}));
 
   console.log("🎧 Escuchando comandos en todos los chats...");
   console.log("💡 Todos los comandos están cargados desde carpetas\n");
