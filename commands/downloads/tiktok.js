@@ -1,4 +1,6 @@
 import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
 
 export default {
   command: ['tiktok', 'tt'],
@@ -39,10 +41,18 @@ export default {
       const videoData = res.data;
       user.usedcommands = (user.usedcommands || 0) + 1;
 
-      
+      const tempPath = path.join('./temp', `tiktok_${Date.now()}.mp4`);
+      const writer = fs.createWriteStream(tempPath);
+
       const videoResponse = await axios.get(videoData.dl, {
-        responseType: 'arraybuffer',
+        responseType: 'stream',
         timeout: 30000
+      });
+
+      videoResponse.data.pipe(writer);
+      await new Promise((resolve, reject) => {
+        writer.on('finish', resolve);
+        writer.on('error', reject);
       });
 
       const caption = `✨ **TIKTOK DOWNLOAD** ✨\n\n` +
@@ -53,15 +63,20 @@ export default {
                       `🚀 **Compartidos:** ${videoData.stats?.shares?.toLocaleString() || '0'}\n\n` +
                       `💙 **Hatsune Miku Bot**`;
 
-      await ctx.replyWithVideo({ 
-        source: Buffer.from(videoResponse.data) 
-      }, {
+      await ctx.replyWithVideo(tempPath, {
         mimeType: 'video/mp4',
-        fileName: 'tiktok_video.mp4',
+        fileName: 'tiktok.mp4',
         supportsStreaming: true,
         caption: caption,
         parseMode: 'markdown'
       });
+
+      
+      try {
+        if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+      } catch (err) {
+        console.error('Error al eliminar temporal:', err);
+      }
 
     } catch (error) {
       console.error('Error en tiktok:', error);
