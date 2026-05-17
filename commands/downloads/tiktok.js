@@ -15,14 +15,9 @@ export default {
     if (!global.db.data.users[userId]) global.db.data.users[userId] = { coins: 0, usedcommands: 0 };
     
     const user = global.db.data.users[userId];
-    const cost = 10;
 
     if (!url.includes('tiktok.com')) {
       return ctx.reply('❌ Por favor proporciona una URL válida de TikTok');
-    }
-
-    if (user.coins < cost) {
-      return ctx.reply(`❌ No tienes suficientes 🌱 Cebollines\n💰 Costo: ${cost} 🌱 Cebollines\n📊 Tienes: ${user.coins} 🌱 Cebollines`);
     }
 
     try {
@@ -42,7 +37,6 @@ export default {
       }
 
       const videoData = res.data;
-      user.coins -= cost;
       user.usedcommands = (user.usedcommands || 0) + 1;
 
       const videoResponse = await axios.get(videoData.dl, {
@@ -53,7 +47,7 @@ export default {
       await ctx.replyWithVideo({ 
         source: videoResponse.data 
       }, {
-        caption: `✨ **TIKTOK DOWNLOAD** ✨\n\n📝 **Título:** ${videoData.title || 'Sin título'}\n💰 **Costo:** ${cost} ${process.env.CURRENCY || 'Coins'}\n📊 **Saldo:** ${user.coins} ${process.env.CURRENCY || 'Coins'}\n\n💙 **Hatsune Miku Bot**`,
+        caption: `✨ **TIKTOK DOWNLOAD** ✨\n\n📝 **Título:** ${videoData.title || 'Sin título'}\n\n💙 **Hatsune Miku Bot**`,
         parseMode: 'markdown'
       });
 
