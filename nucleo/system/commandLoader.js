@@ -12,7 +12,7 @@ global.commands = new Map();
 
 const middlewares = {
   isOwner: (ctx, cmd) => {
-    if (cmd.isOwner && ctx.senderId !== settings.ownerId) {
+    if (cmd.isOwner && String(ctx.senderId).trim() !== String(settings.ownerId).trim()) {
       ctx.reply({ message: '❌ Este comando solo puede usarlo el owner.' });
       return false;
     }
@@ -120,7 +120,13 @@ export async function executeCommand(ctx, commandName, args) {
 
   try {
  
-    for (const middlewareName of cmd.middlewares || []) {
+    
+    const activeMiddlewares = [...(cmd.middlewares || [])];
+    if (cmd.isOwner && !activeMiddlewares.includes('isOwner')) activeMiddlewares.push('isOwner');
+    if (cmd.isAdmin && !activeMiddlewares.includes('isAdmin')) activeMiddlewares.push('isAdmin');
+    if (cmd.isNSFW && !activeMiddlewares.includes('isNSFW')) activeMiddlewares.push('isNSFW');
+
+    for (const middlewareName of activeMiddlewares) {
       const middleware = middlewares[middlewareName];
       if (middleware && !(await middleware(ctx, cmd))) {
         return { success: false, error: 'Middleware rechazó el comando' };

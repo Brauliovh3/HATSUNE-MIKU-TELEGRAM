@@ -27,7 +27,6 @@ export default {
       if (!lastId) return ctx.reply('**❌ Primero busca una canción o video.**');
       
       const num = args[0];
-      await ctx.react('⏳');
       const selectionMap = {
         '1': `audio_${lastId}`,
         '2': `video_${lastId}`,

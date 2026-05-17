@@ -192,9 +192,11 @@ async function qrLoginFlow() {
 async function loadExternalCommands() {
   if (!fs.existsSync("./nucleo/system/commandLoader.js")) return;
   try {
-    const { loadCommands } = await import("./nucleo/system/commandLoader.js");
+    const { loadCommands, executeCommand } = await import("./nucleo/system/commandLoader.js");
     await loadCommands();
+    global.executeCommand = executeCommand;
   } catch (e) {
+    console.error("Error cargando el cargador de comandos:", e);
   }
 }
 
@@ -276,12 +278,6 @@ async function startBot() {
       const cmd = global.commands.get(cmdName);
       
       if (cmd) {
-        
-        if (cmd.isOwner && senderId !== settings.ownerId) {
-          await msg.reply({ message: "❌ Este comando solo puede usarlo el owner." });
-          return;
-        }
-        
         try {
        
           const ctx = {
@@ -295,10 +291,12 @@ async function startBot() {
             myId,
             react: async (emoticon) => {
               try {
+                const inputPeer = await msg.getInputChat();
                 return await client.invoke(new Api.messages.SendReaction({
-                  peer: msg.peerId,
+                  peer: inputPeer,
                   msgId: msg.id,
-                  reaction: emoticon ? [new Api.ReactionEmoji({ emoticon })] : []
+                  reaction: emoticon ? [new Api.ReactionEmoji({ emoticon })] : [],
+                  addToRecent: true
                 }));
               } catch (e) { console.error("Error al reaccionar:", e.message); }
             },
@@ -334,7 +332,7 @@ async function startBot() {
             message: msg
           };
           
-          await cmd.run(ctx, args);
+          await global.executeCommand(ctx, cmdName, args);
           return;
         } catch (e) {
           console.error(`❌ Error en comando ${cmdName}:`, e.message);
@@ -369,10 +367,12 @@ async function startBot() {
             senderId: query.userId?.toString(),
             react: async (emoticon) => {
               try {
+                const inputPeer = query.peer; 
                 return await client.invoke(new Api.messages.SendReaction({
-                  peer: query.peer,
+                  peer: inputPeer,
                   msgId: query.msgId,
-                  reaction: emoticon ? [new Api.ReactionEmoji({ emoticon })] : []
+                  reaction: emoticon ? [new Api.ReactionEmoji({ emoticon })] : [],
+                  addToRecent: true
                 }));
               } catch (e) { }
             },
