@@ -13,59 +13,45 @@ export default {
   async run(ctx, args) {
     try {
       const msg = ctx.message;
-      let imageBuffer = null;
+      let targetMedia = null;
 
-      if (msg.replyTo) {
-        const repliedMsg = await msg.replyTo;
-        
-        if (repliedMsg.media) {
-          if (repliedMsg.media.photo) {
-            const buffer = await ctx.client.downloadMedia(repliedMsg.media, {
-              workers: 1
-            });
-            imageBuffer = buffer;
-          } else if (repliedMsg.media.document) {
-            const document = repliedMsg.media.document;
-            if (document.mimeType?.startsWith('image/')) {
-              const buffer = await ctx.client.downloadMedia(repliedMsg.media, {
-                workers: 1
-              });
-              imageBuffer = buffer;
-            }
-          }
-        }
-      } else if (msg.media) {
-        if (msg.media.photo) {
-          const buffer = await ctx.client.downloadMedia(msg.media, {
-            workers: 1
-          });
-          imageBuffer = buffer;
-        } else if (msg.media.document) {
-          const document = msg.media.document;
-          if (document.mimeType?.startsWith('image/')) {
-            const buffer = await ctx.client.downloadMedia(msg.media, {
-              workers: 1
-            });
-            imageBuffer = buffer;
-          }
-        }
+      
+      const repliedMsg = await msg.getReplyMessage();
+     
+      const mediaMsg = repliedMsg || msg;
+
+      if (mediaMsg.media && (mediaMsg.media.photo || (mediaMsg.media.document && mediaMsg.media.document.mimeType?.startsWith('image/')))) {
+        targetMedia = mediaMsg.media;
       }
 
-      if (!imageBuffer) {
+      if (!targetMedia) {
         return ctx.reply('💙 Responde a una imagen o envía una imagen con el comando\n📝 Ejemplo: .s respondiendo a una imagen');
       }
 
-     
+      
+      const buffer = await ctx.client.downloadMedia(targetMedia, { workers: 1 });
+
       if (!fs.existsSync('./temp')) fs.mkdirSync('./temp', { recursive: true });
-      const tempPath = path.join('./temp', `sticker_${Date.now()}.jpg`);
-      fs.writeFileSync(tempPath, imageBuffer);
+      const tempPath = path.join('./temp', `sticker_${Date.now()}.webp`);
 
       
+      await sharp(buffer)
+        .resize(512, 512, {
+          fit: 'inside',
+          withoutEnlargement: false
+        })
+        .toFormat('webp')
+        .toFile(tempPath);
+
+     
       await ctx.client.sendFile(ctx.chatId, {
         file: tempPath,
-        fileName: `sticker_${Date.now()}.webp`,
-        mimeType: 'image/webp',
-        forceDocument: false
+        attributes: [
+          new Api.DocumentAttributeSticker({
+            alt: "💙",
+            stickerset: new Api.InputStickerSetEmpty(),
+          })
+        ]
       });
 
       
