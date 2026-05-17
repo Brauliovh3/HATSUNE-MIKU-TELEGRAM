@@ -292,6 +292,15 @@ async function startBot() {
             senderId,
             me,
             myId,
+            react: async (emoticon) => {
+              try {
+                return await client.invoke(new Api.messages.SendReaction({
+                  peer: msg.peerId,
+                  msgId: msg.id,
+                  reaction: emoticon ? [new Api.ReactionEmoji({ emoticon })] : []
+                }));
+              } catch (e) { console.error("Error al reaccionar:", e.message); }
+            },
             answerCallbackQuery: async () => {}, 
             reply: async (textOrOpts, maybeOpts = {}) => {
               const opts = typeof textOrOpts === 'string' ? { message: textOrOpts, ...maybeOpts } : { ...textOrOpts };
@@ -357,6 +366,15 @@ async function startBot() {
             query: query,
             chatId: query.peer,
             senderId: query.userId?.toString(),
+            react: async (emoticon) => {
+              try {
+                return await client.invoke(new Api.messages.SendReaction({
+                  peer: query.peer,
+                  msgId: query.msgId,
+                  reaction: emoticon ? [new Api.ReactionEmoji({ emoticon })] : []
+                }));
+              } catch (e) { }
+            },
             answerCallbackQuery: async (options) => {
               const text = typeof options === 'string' ? options : options.text;
               const alert = typeof options === 'object' ? (options.showAlert || options.alert) : false;

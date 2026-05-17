@@ -27,6 +27,7 @@ export default {
       if (!lastId) return ctx.reply('**❌ Primero busca una canción o video.**');
       
       const num = args[0];
+      await ctx.react('⏳');
       const selectionMap = {
         '1': `audio_${lastId}`,
         '2': `video_${lastId}`,
@@ -132,6 +133,8 @@ export default {
             text: `⏳ Preparando ${formatInfo.name}...`,
             showAlert: true
           });
+        } else {
+          await ctx.react('⏳');
         }
 
         const apiUrl = `https://api.alyacore.xyz/dl/${formatInfo.api}?url=https://youtu.be/${videoId}&key=DEPOOL-key60015091`;
@@ -165,6 +168,8 @@ export default {
             parseMode: 'markdown',
             supportsStreaming: isVideo
           });
+          
+          await ctx.react('✅');
           
           setTimeout(() => {
             try {
