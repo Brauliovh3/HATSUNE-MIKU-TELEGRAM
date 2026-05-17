@@ -1,5 +1,7 @@
 import pkg from 'telegram';
-const { TelegramClient, Api, events } = pkg;
+const { TelegramClient, Api } = pkg;
+import pkgEvents from "telegram/events/index.js";
+const { NewMessage, CallbackQuery } = pkgEvents;
 import { StringSession } from "telegram/sessions/index.js";
 import QRCode from "qrcode";
 import input from "input";
@@ -338,7 +340,7 @@ async function startBot() {
    
    
 
-  }, new events.NewMessage({
+  }, new NewMessage({
     outgoing: true,
     incoming: true
   }));
@@ -386,7 +388,7 @@ async function startBot() {
         }
       }
     }
-  }, new events.CallbackQuery({}));
+  }, new CallbackQuery({}));
 
   console.log("🎧 Escuchando comandos en todos los chats...");
   console.log("💡 Todos los comandos están cargados desde carpetas\n");

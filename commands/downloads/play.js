@@ -91,9 +91,10 @@ export default {
 
         await ctx.reply({
           message: message,
-          parse_mode: 'markdown',
+          parseMode: 'md',
           ...global.Markup.inlineKeyboard([
-            [global.Markup.button.callback('🎵 Audio MP3', `audio_${videoId}`), global.Markup.button.callback('🎥 Video MP4', `video_${videoId}`)]
+            [global.Markup.button.callback('🎵 MP3', `audio_${videoId}`), global.Markup.button.callback('🎥 MP4', `video_${videoId}`)],
+            [global.Markup.button.callback('🎼 WAV', `wav_${videoId}`), global.Markup.button.callback('🎬 AVI', `avi_${videoId}`)]
           ])
         });
       }
