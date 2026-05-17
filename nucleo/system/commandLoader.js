@@ -53,6 +53,7 @@ function isNSFWAllowed(ctx) {
 export async function loadCommands() {
 
   const commandFolders = [
+    '../../commands/main',
     '../../commands/economia',
     '../../commands/gacha', 
     '../../commands/downloads',

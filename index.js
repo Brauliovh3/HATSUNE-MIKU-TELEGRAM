@@ -54,12 +54,13 @@ const client = new TelegramClient(
   apiHash,
   { connectionRetries: 5 }
 );
+process.stdout.write("\x1B[2J\x1B[0f"); 
 client.setLogLevel("error");
 
 if (botToken && botToken.length > 10) {
   await client.start({ botAuthToken: botToken });
   const me = await client.getMe();
-  process.stdout.write("\x1Bc");
+  process.stdout.write("\x1B[2J\x1B[0f"); 
   console.log(`
 ┌──────────────────────────────────────────┐
 │        💙 HATSUNE MIKU BOT ONLINE 💙     │
@@ -73,7 +74,7 @@ if (botToken && botToken.length > 10) {
 } else if (sessionString.length > 5) {
   await client.connect();
   const me = await client.getMe();
-  process.stdout.write("\x1Bc");
+  process.stdout.write("\x1B[2J\x1B[0f");
   console.log(`
 ┌──────────────────────────────────────────┐
 │      👤 HATSUNE MIKU USERBOT ONLINE 👤   │
@@ -242,12 +243,26 @@ async function loadMenu() {
 }
 
 
+async function registerBotCommands() {
+  try {
+    const botCommands = Array.from(global.commands.values())
+      .filter(cmd => !cmd.isOwner) 
+      .map(cmd => new Api.BotCommand({
+        command: Array.isArray(cmd.command) ? cmd.command[0] : cmd.command,
+        description: cmd.description || 'Comando de Hatsune Miku'
+      }));
+    
+    await client.invoke(new Api.bots.SetBotCommands({ commands: botCommands, scope: new Api.BotCommandScopeDefault(), langCode: '' }));
+  } catch (e) { }
+}
+
 async function startBot(me) {
   
   if (!fs.existsSync("./temp")) fs.mkdirSync("./temp", { recursive: true });
 
   await initializeDatabase();
   await loadExternalCommands();
+  await registerBotCommands();
   const menuData = await loadMenu();
 
   const myId = me.id?.toString();

@@ -1,17 +1,12 @@
 import serverQR from '../../nucleo/system/serverQR.js';
+import settings from '../../settings.js';
 
 export default {
   command: ['serverstatus', 'statusserver', 'estadoservidor'],
   category: 'owner',
   description: 'Ver estado del servidor y vinculaciones',
+  isOwner: true,
   async run(ctx, args) {
-    const userId = ctx.from.id.toString();
-    
-    // Verificar si es owner
-    if (!global.owner.includes(userId)) {
-      return ctx.reply('❌ Solo el owner puede usar este comando.');
-    }
-
     try {
       const status = serverQR.getServerStatus();
       
