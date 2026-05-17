@@ -39,16 +39,26 @@ export default {
       const videoData = res.data;
       user.usedcommands = (user.usedcommands || 0) + 1;
 
+      
       const videoResponse = await axios.get(videoData.dl, {
         responseType: 'arraybuffer',
         timeout: 30000
       });
 
+      const caption = `✨ **TIKTOK DOWNLOAD** ✨\n\n` +
+                      `📝 **Título:** ${videoData.title || 'Sin título'}\n` +
+                      `👤 **Autor:** ${videoData.author?.nickname || 'Desconocido'}\n` +
+                      `❤️ **Likes:** ${videoData.stats?.likes?.toLocaleString() || '0'}\n` +
+                      `💬 **Comentarios:** ${videoData.stats?.comments?.toLocaleString() || '0'}\n` +
+                      `🚀 **Compartidos:** ${videoData.stats?.shares?.toLocaleString() || '0'}\n\n` +
+                      `💙 **Hatsune Miku Bot**`;
+
       await ctx.replyWithVideo({ 
         source: Buffer.from(videoResponse.data) 
       }, {
-        caption: `✨ **TIKTOK DOWNLOAD** ✨\n\n📝 **Título:** ${videoData.title || 'Sin título'}\n\n💙 **Hatsune Miku Bot**`,
-        parseMode: 'markdown'
+        fileName: 'tiktok.mp4',
+        caption: caption,
+        parseMode: 'markdown' 
       });
 
     } catch (error) {
