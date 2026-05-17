@@ -135,9 +135,8 @@ export default {
             text: `⏳ Preparando ${formatInfo.name}...`,
             showAlert: true
           });
-        } else {
-          await ctx.react('⏳');
         }
+        if (ctx.react) await ctx.react('⏳');
 
         const youtubeUrl = `https://www.youtube.com/watch?v=${videoId}`;
         const apiUrl = `https://api.alyacore.xyz/dl/${formatInfo.api}?url=${encodeURIComponent(youtubeUrl)}&key=DEPOOL-key60015091`;
@@ -150,19 +149,21 @@ export default {
           const dlData = isVideo ? apiResponse.data.result : apiResponse.data.data;
           
           const userId = ctx.senderId;
-          const savedTitle = global.db.data.users[userId]?.lastVideoTitle || (isVideo ? dlData.title : 'YouTube Audio');
+          const savedTitle = global.db.data.users[userId]?.lastVideoTitle || (isVideo ? dlData.title : 'YouTube File');
           
           const downloadUrl = isVideo ? dlData.downloadUrl : dlData.dl;
           const fileName = isVideo ? `${dlData.title || savedTitle}.mp4` : dlData.fileName;
           
-          let progressMsg = await ctx.reply(`📥 **Iniciando descarga...**\n📝 **Archivo:** \`${savedTitle}\``);
-
           const fileResponse = await axios.get(downloadUrl, {
             responseType: 'stream',
             timeout: 90000
           });
           
           const totalBytes = parseInt(fileResponse.headers['content-length'], 10) || 0;
+
+          if (ctx.react) await ctx.react('📥');
+          let progressMsg = await ctx.reply(`⏳ **Descargando:** 0.0%\n📝 **Archivo:** \`${savedTitle}\`\n📦 **Tamaño:** ${(totalBytes / 1024 / 1024).toFixed(2)} MB`);
+
           let downloadedBytes = 0;
           let lastUpdate = Date.now();
 
