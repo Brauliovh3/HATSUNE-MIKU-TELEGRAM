@@ -66,7 +66,8 @@ if (botToken && botToken.length > 10) {
 ├──────────────────────────────────────────┤
 │ 👤 NOMBRE : ${me.firstName.substring(0, 25).padEnd(28)} │
 │ 🔖 USER   : @${(me.username || 'sin user').substring(0, 25).padEnd(27)} │
-│ 🆔 ID     : ${me.id.toString().padEnd(28)} │
+│ 🆔 BOT ID : ${me.id.toString().padEnd(28)} │
+│ 👑 OWNERID: ${settings.ownerId.padEnd(28)} │
 └──────────────────────────────────────────┘`);
   startBot(me);
 } else if (sessionString.length > 5) {
@@ -79,7 +80,7 @@ if (botToken && botToken.length > 10) {
 ├──────────────────────────────────────────┤
 │ 👤 NOMBRE : ${me.firstName.substring(0, 25).padEnd(28)} │
 │ 🔖 USER   : @${(me.username || 'sin user').substring(0, 25).padEnd(27)} │
-│ 🆔 ID     : ${me.id.toString().padEnd(28)} │
+│ 👑 OWNERID: ${me.id.toString().padEnd(28)} │
 │ 📱 TEL    : ${ (me.phone || 'Privado').padEnd(28) } │
 └──────────────────────────────────────────┘`);
   startBot(me);
