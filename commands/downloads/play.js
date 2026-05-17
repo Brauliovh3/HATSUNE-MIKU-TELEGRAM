@@ -142,25 +142,49 @@ export default {
         const youtubeUrl = `https://www.youtube.com/watch?v=${videoId}`;
         const apiUrl = `https://api.alyacore.xyz/dl/${formatInfo.api}?url=${encodeURIComponent(youtubeUrl)}&key=DEPOOL-key60015091`;
         
-        const apiResponse = await axios.get(apiUrl);
+        
+        const apiResponse = await axios.get(apiUrl, { timeout: 60000 });
         
         if (apiResponse.data.status) {
           const isVideo = formatInfo.api === 'ytmp4';
           const dlData = isVideo ? apiResponse.data.result : apiResponse.data.data;
           
           const userId = ctx.senderId;
-          const savedTitle = global.db.data.users[userId]?.lastVideoTitle || 'YouTube File';
+          const savedTitle = global.db.data.users[userId]?.lastVideoTitle || (isVideo ? dlData.title : 'YouTube Audio');
           
           const downloadUrl = isVideo ? dlData.downloadUrl : dlData.dl;
           const fileName = isVideo ? `${dlData.title || savedTitle}.mp4` : dlData.fileName;
           
+          let progressMsg = await ctx.reply(`📥 **Iniciando descarga...**\n📝 **Archivo:** \`${savedTitle}\``);
+
           const fileResponse = await axios.get(downloadUrl, {
-            responseType: 'stream'
+            responseType: 'stream',
+            timeout: 90000
           });
           
+          const totalBytes = parseInt(fileResponse.headers['content-length'], 10) || 0;
+          let downloadedBytes = 0;
+          let lastUpdate = Date.now();
+
           const cleanFileName = (fileName || `yt_${Date.now()}`).replace(/[^a-zA-Z0-9.]/g, '_');
           const filePath = path.join('./temp', cleanFileName);
           const fileWriter = fs.createWriteStream(filePath);
+
+          fileResponse.data.on('data', (chunk) => {
+            downloadedBytes += chunk.length;
+            const now = Date.now();
+            
+            if (totalBytes > 0 && now - lastUpdate > 3000) {
+              const percent = ((downloadedBytes / totalBytes) * 100).toFixed(1);
+              ctx.client.editMessage(ctx.chatId, {
+                id: progressMsg.id,
+                message: `⏳ **Descargando:** ${percent}%\n📦 **Tamaño:** ${(totalBytes / 1024 / 1024).toFixed(2)} MB`,
+                parseMode: 'markdown'
+              }).catch(() => {});
+              lastUpdate = now;
+            }
+          });
+
           fileResponse.data.pipe(fileWriter);
           
           await new Promise((resolve, reject) => {
@@ -168,14 +192,17 @@ export default {
             fileWriter.on('error', reject);
           });
           
+          if (progressMsg) {
+            await ctx.client.editMessage(ctx.chatId, { id: progressMsg.id, message: '📤 **Enviando a Telegram...**' }).catch(() => {});
+          }
           
           const thumbPath = path.join('./temp', `thumb_${videoId}.jpg`);
           try {
-            const thumbUrl = isVideo && dlData.thumbnail ? dlData.thumbnail : `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+            const thumbUrl = (isVideo && dlData.thumbnail) ? dlData.thumbnail : `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
             const thumbRes = await axios.get(thumbUrl, { responseType: 'arraybuffer' });
             fs.writeFileSync(thumbPath, Buffer.from(thumbRes.data));
           } catch (e) {
-            console.error('Error al descargar miniatura:', e.message);
+           
           }
 
           await ctx.client.sendFile(ctx.chatId, {
@@ -196,7 +223,7 @@ export default {
           }, 5000);
           
         } else {
-          const errorMsg = `❌ Error al obtener enlace de descarga para ${formatInfo.name}`;
+          const errorMsg = `❌ **La API no pudo procesar el enlace.**\nMotivo: ${apiResponse.data.message || 'Desconocido'}`;
           if (ctx.query?.queryId) {
             await ctx.answerCallbackQuery({ text: errorMsg, showAlert: true });
           } else {
