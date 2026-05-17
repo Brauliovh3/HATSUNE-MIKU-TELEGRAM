@@ -289,6 +289,7 @@ async function startBot(me) {
     console.log(`
 ┌── [ 📩 COMANDO ] ──┐
 │ 👤: ${userName.substring(0, 15).padEnd(15)} │
+│ 🆔: ${senderId.padEnd(15)} │
 │ 💬: ${chatName.toString().substring(0, 15).padEnd(15)} │
 │ ⌨️: ${cmdName.padEnd(15)} │
 │ ⏰: ${time.padEnd(15)} │
