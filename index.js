@@ -1,6 +1,7 @@
-import { TelegramClient, Api, events } from "telegram";
-const { NewMessage, CallbackQuery } = events;
+import pkg from "telegram";
+import { NewMessage, CallbackQuery } from "telegram/events/index.js";
 import { StringSession } from "telegram/sessions/index.js";
+const { TelegramClient, Api } = pkg;
 import QRCode from "qrcode";
 import input from "input";
 import fs from "fs";
