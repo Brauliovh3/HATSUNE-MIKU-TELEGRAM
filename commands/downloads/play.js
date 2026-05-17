@@ -139,7 +139,8 @@ export default {
           await ctx.react('⏳');
         }
 
-        const apiUrl = `https://api.alyacore.xyz/dl/${formatInfo.api}?url=https://youtu.be/${videoId}&key=DEPOOL-key60015091`;
+        const youtubeUrl = `https://www.youtube.com/watch?v=${videoId}`;
+        const apiUrl = `https://api.alyacore.xyz/dl/${formatInfo.api}?url=${encodeURIComponent(youtubeUrl)}&key=DEPOOL-key60015091`;
         
         const apiResponse = await axios.get(apiUrl);
         
@@ -167,8 +168,19 @@ export default {
             fileWriter.on('error', reject);
           });
           
+          
+          const thumbPath = path.join('./temp', `thumb_${videoId}.jpg`);
+          try {
+            const thumbUrl = isVideo && dlData.thumbnail ? dlData.thumbnail : `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+            const thumbRes = await axios.get(thumbUrl, { responseType: 'arraybuffer' });
+            fs.writeFileSync(thumbPath, Buffer.from(thumbRes.data));
+          } catch (e) {
+            console.error('Error al descargar miniatura:', e.message);
+          }
+
           await ctx.client.sendFile(ctx.chatId, {
             file: filePath,
+            thumb: fs.existsSync(thumbPath) ? thumbPath : undefined,
             caption: `✅ **${formatInfo.name} descargado**\n📝 **Título:** ${savedTitle}\n\n💙 **Hatsune Miku Bot**`,
             parseMode: 'markdown',
             supportsStreaming: isVideo
@@ -177,6 +189,7 @@ export default {
           setTimeout(() => {
             try {
               fs.unlinkSync(filePath);
+              if (fs.existsSync(thumbPath)) fs.unlinkSync(thumbPath);
             } catch (e) {
               
             }
