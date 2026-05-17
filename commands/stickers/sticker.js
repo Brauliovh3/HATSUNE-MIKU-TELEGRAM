@@ -1,5 +1,8 @@
+import pkg from "telegram";
+const { Api } = pkg;
 import fs from 'fs';
 import path from 'path';
+import sharp from 'sharp';
 
 export default {
   command: ['s', 'sticker'],
