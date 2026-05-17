@@ -1,7 +1,6 @@
 import pkg from 'telegram';
-const { TelegramClient, Api } = pkg;
-import pkgEvents from "telegram/events/index.js";
-const { NewMessage, CallbackQuery } = pkgEvents;
+const { TelegramClient, Api, events } = pkg;
+const { NewMessage, CallbackQuery } = events;
 import { StringSession } from "telegram/sessions/index.js";
 import QRCode from "qrcode";
 import input from "input";
@@ -255,7 +254,7 @@ async function startBot() {
     const chatId = msg.chatId;
     const senderId = msg.senderId?.toString();
 
-    // Detección mejorada: permite "." solo, o "." seguido de cualquier cantidad de espacios y luego el comando
+    // Detecta comandos con o sin espacios: ".play" o ". play"
     const match = text.match(/^\.\s*([a-zA-Z0-9]+)(?:\s+(.*))?$/s);
     if (!match) return;
 

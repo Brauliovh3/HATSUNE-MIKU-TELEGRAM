@@ -71,8 +71,8 @@ export default {
         
        
         await ctx.replyWithPhoto(thumbnailUrl, {
-          caption: `🎵 *VIDEO ENCONTRADO* 🎵\n\n📝 *Título:* ${title}\n🆔 *ID:* ${videoId}\n\n📥 *Elige formato para descargar:*`,
-          parseMode: 'md',
+          caption: `🎵 *RESULTADO DE BÚSQUEDA* 🎵\n\n📝 *Título:* ${title}\n🆔 *ID:* ${videoId}\n\n📥 *Selecciona un formato:*`,
+          parseMode: 'md', 
           ...global.Markup.inlineKeyboard([
             [global.Markup.button.callback('🎵 MP3', `audio_${videoId}`), global.Markup.button.callback('🎥 MP4', `video_${videoId}`), global.Markup.button.callback('🎼 WAV', `wav_${videoId}`)],
             [global.Markup.button.callback('🎬 AVI', `avi_${videoId}`), global.Markup.button.callback('📹 MOV', `mov_${videoId}`), global.Markup.button.callback('🎞️ MKV', `mkv_${videoId}`)],
@@ -80,7 +80,6 @@ export default {
             [global.Markup.button.callback('🎥 3GP', `3gp_${videoId}`), global.Markup.button.callback('🎵 OGG', `ogg_${videoId}`), global.Markup.button.callback('🎥 M4V', `m4v_${videoId}`)]
           ])
         });
-
       } catch (infoError) {
         const message = `🎵 *VIDEO ENCONTRADO* 🎵
 

@@ -73,7 +73,7 @@ export default {
 ⚠️ *Nota:* Para archivos muy grandes, es posible que no se puedan enviar directamente por Telegram. Usa el enlace de descarga.`;
 
       await ctx.reply(message, {
-        parse_mode: 'Markdown',
+        parseMode: 'md',
         ...global.Markup.inlineKeyboard([
           [global.Markup.button.url('📥 DESCARGAR DIRECTO', data.download_url)]
         ])
