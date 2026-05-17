@@ -239,7 +239,7 @@ async function startBot() {
     const chatId = msg.chatId;
     const senderId = msg.senderId?.toString();
 
-    // Detecta comandos (".play") o respuestas numéricas directas ("1")
+   
     let cmdName, args;
     const match = text.match(/^\.\s*([a-zA-Z0-9]+)(?:\s+(.*))?$/s);
 
@@ -247,7 +247,7 @@ async function startBot() {
       cmdName = match[1].toLowerCase();
       args = match[2] ? match[2].trim().split(/\s+/) : [];
     } else if (/^[1-4]$/.test(text)) {
-      // Si es una respuesta a un mensaje del propio bot
+      
       const repliedMsg = await msg.getReplyMessage();
       if (repliedMsg && repliedMsg.senderId?.toString() === myId) {
         cmdName = 'play';
@@ -292,6 +292,7 @@ async function startBot() {
             senderId,
             me,
             myId,
+            answerCallbackQuery: async () => {}, 
             reply: async (textOrOpts, maybeOpts = {}) => {
               const opts = typeof textOrOpts === 'string' ? { message: textOrOpts, ...maybeOpts } : { ...textOrOpts };
               const pm = (opts.parseMode || opts.parse_mode || 'markdown').toLowerCase();

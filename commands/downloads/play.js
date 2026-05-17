@@ -127,10 +127,12 @@ export default {
       const formatInfo = formats[formatRequested];
       if (formatInfo && videoId) {
         
-        await ctx.answerCallbackQuery({
-          text: `⏳ Preparando ${formatInfo.name}...`,
-          showAlert: true
-        });
+        if (ctx.query?.queryId) {
+          await ctx.answerCallbackQuery({
+            text: `⏳ Preparando ${formatInfo.name}...`,
+            showAlert: true
+          });
+        }
 
         const apiUrl = `https://api.alyacore.xyz/dl/${formatInfo.api}?url=https://youtu.be/${videoId}&key=DEPOOL-key60015091`;
         
@@ -173,23 +175,26 @@ export default {
           }, 5000);
           
         } else {
-          await ctx.answerCallbackQuery({
-            text: `❌ Error al obtener enlace de descarga para ${formatInfo.name}`,
-            showAlert: true
-          });
+          const errorMsg = `❌ Error al obtener enlace de descarga para ${formatInfo.name}`;
+          if (ctx.query?.queryId) {
+            await ctx.answerCallbackQuery({ text: errorMsg, showAlert: true });
+          } else {
+            await ctx.reply(errorMsg);
+          }
         }
       } else {
-        await ctx.answerCallbackQuery({
-          text: '❌ Error al obtener enlace de descarga',
-          showAlert: true
-        });
+        const errorMsg = '❌ Error al obtener enlace de descarga';
+        if (ctx.query?.queryId) {
+          await ctx.answerCallbackQuery({ text: errorMsg, showAlert: true });
+        } else {
+          await ctx.reply(errorMsg);
+        }
       }
     } catch (error) {
       console.error('Error en callback:', error);
-      await ctx.answerCallbackQuery({
-        text: '❌ Error en la descarga',
-        showAlert: true
-      });
+      if (ctx.query?.queryId) {
+        await ctx.answerCallbackQuery({ text: '❌ Error en la descarga', showAlert: true });
+      }
     }
   }
 };
