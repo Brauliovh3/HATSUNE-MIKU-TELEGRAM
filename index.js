@@ -1,6 +1,5 @@
 import pkg from 'telegram';
-const { TelegramClient, Api } = pkg;
-import * as events from "telegram/events/index.js";
+const { TelegramClient, Api, events } = pkg;
 const { NewMessage, CallbackQuery } = events;
 import { StringSession } from "telegram/sessions/index.js";
 import QRCode from "qrcode";
@@ -359,7 +358,7 @@ async function startBot() {
           const ctx = {
             client,
             query: query,
-            chatId: query.peer?.toString(),
+            chatId: query.peer,
             senderId: query.userId?.toString(),
             answerCallbackQuery: async (options) => {
               const text = typeof options === 'string' ? options : options.text;
