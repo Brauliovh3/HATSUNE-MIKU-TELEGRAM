@@ -181,7 +181,7 @@ export default {
           await ctx.client.sendFile(ctx.chatId, {
             file: filePath,
             thumb: fs.existsSync(thumbPath) ? thumbPath : undefined,
-            caption: `✅ **${formatInfo.name} descargado**\n📝 **Título:** ${savedTitle}\n\n💙 **Hatsune Miku Bot**`,
+            caption: `✨ **YOUTUBE DOWNLOAD** ✨\n\n📝 **Título:** ${savedTitle}\n📦 **Formato:** ${formatInfo.name}\n\n💙 **Hatsune Miku Bot**`,
             parseMode: 'markdown',
             supportsStreaming: isVideo
           });

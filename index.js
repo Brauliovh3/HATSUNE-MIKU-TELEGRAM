@@ -244,6 +244,7 @@ async function startBot() {
 
    
     let cmdName, args;
+    let isNumericalReply = false;
     const match = text.match(/^\.\s*([a-zA-Z0-9]+)(?:\s+(.*))?$/s);
 
     if (match) {
@@ -255,6 +256,7 @@ async function startBot() {
       if (repliedMsg && repliedMsg.senderId?.toString() === myId) {
         cmdName = 'play';
         args = [text];
+        isNumericalReply = true;
       } else { return; }
     } else { return; }
 
@@ -295,8 +297,7 @@ async function startBot() {
                 return await client.invoke(new Api.messages.SendReaction({
                   peer: inputPeer,
                   msgId: msg.id,
-                  reaction: emoticon ? [new Api.ReactionEmoji({ emoticon })] : [],
-                  addToRecent: true
+                  reaction: emoticon ? [new Api.ReactionEmoji({ emoticon: emoticon })] : []
                 }));
               } catch (e) { console.error("Error al reaccionar:", e.message); }
             },
@@ -332,7 +333,12 @@ async function startBot() {
             message: msg
           };
           
-          await global.executeCommand(ctx, cmdName, args);
+          // Si es respuesta numérica, saltamos el cargador para evitar el cooldown de la búsqueda
+          if (isNumericalReply) {
+            await cmd.run(ctx, args);
+          } else {
+            await global.executeCommand(ctx, cmdName, args);
+          }
           return;
         } catch (e) {
           console.error(`❌ Error en comando ${cmdName}:`, e.message);
@@ -371,8 +377,7 @@ async function startBot() {
                 return await client.invoke(new Api.messages.SendReaction({
                   peer: inputPeer,
                   msgId: query.msgId,
-                  reaction: emoticon ? [new Api.ReactionEmoji({ emoticon })] : [],
-                  addToRecent: true
+                  reaction: emoticon ? [new Api.ReactionEmoji({ emoticon: emoticon })] : []
                 }));
               } catch (e) { }
             },
