@@ -1,8 +1,7 @@
 import pkg from 'telegram';
 const { TelegramClient, Api } = pkg;
-import pkgEvents from "telegram/events/index.js";
-const NewMessage = pkgEvents.NewMessage || pkgEvents.default?.NewMessage;
-const CallbackQuery = pkgEvents.CallbackQuery || pkgEvents.default?.CallbackQuery;
+import * as events from "telegram/events/index.js";
+const { NewMessage, CallbackQuery } = events;
 import { StringSession } from "telegram/sessions/index.js";
 import QRCode from "qrcode";
 import input from "input";
