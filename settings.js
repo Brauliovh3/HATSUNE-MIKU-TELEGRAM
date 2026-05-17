@@ -6,7 +6,7 @@ export default {
   botname: process.env.BOT_NAME || '💙HATSUNE MIKU💙',
   link: process.env.BOT_CHANNEL || 'https://t.me/BVH3INDUSTRIES',
   owner: '(ㅎㅊDEPOOLㅊㅎ)',  
-  ownerId: process.env.OWNER_ID || '51931619252', 
+  ownerId: process.env.OWNER_ID || '8719556715', 
   currency: process.env.CURRENCY || '🌱 Cebollines',
   prefix: ['.'],
   audios: false,
