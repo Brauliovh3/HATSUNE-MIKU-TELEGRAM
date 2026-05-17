@@ -59,14 +59,29 @@ client.setLogLevel("error");
 if (botToken && botToken.length > 10) {
   await client.start({ botAuthToken: botToken });
   const me = await client.getMe();
-  process.stdout.write("\x1Bc"); 
-  console.log(`💙 BOT ONLINE: ${me.firstName} (@${me.username || 'sin user'}) [ID: ${me.id}] 💙`);
+  process.stdout.write("\x1Bc");
+  console.log(`
+┌──────────────────────────────────────────┐
+│        💙 HATSUNE MIKU BOT ONLINE 💙     │
+├──────────────────────────────────────────┤
+│ 👤 NOMBRE : ${me.firstName.substring(0, 25).padEnd(28)} │
+│ 🔖 USER   : @${(me.username || 'sin user').substring(0, 25).padEnd(27)} │
+│ 🆔 ID     : ${me.id.toString().padEnd(28)} │
+└──────────────────────────────────────────┘`);
   startBot(me);
 } else if (sessionString.length > 5) {
   await client.connect();
   const me = await client.getMe();
-  process.stdout.write("\x1Bc"); 
-  console.log(`👤 USERBOT ONLINE: ${me.firstName} (@${me.username || 'sin user'}) [ID: ${me.id}] 👤`);
+  process.stdout.write("\x1Bc");
+  console.log(`
+┌──────────────────────────────────────────┐
+│      👤 HATSUNE MIKU USERBOT ONLINE 👤   │
+├──────────────────────────────────────────┤
+│ 👤 NOMBRE : ${me.firstName.substring(0, 25).padEnd(28)} │
+│ 🔖 USER   : @${(me.username || 'sin user').substring(0, 25).padEnd(27)} │
+│ 🆔 ID     : ${me.id.toString().padEnd(28)} │
+│ 📱 TEL    : ${ (me.phone || 'Privado').padEnd(28) } │
+└──────────────────────────────────────────┘`);
   startBot(me);
 } else {
   console.log("1 => Login por código (recomendado en servidor)");
