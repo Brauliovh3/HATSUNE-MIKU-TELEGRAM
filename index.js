@@ -1,14 +1,11 @@
-import { TelegramClient, Api } from "telegram";
-import pkgEvents from "telegram/events/index.js";
+import pkg from "telegram";
+const { TelegramClient, Api, events } = pkg;
+const { NewMessage, CallbackQuery } = events;
 import { StringSession } from "telegram/sessions/index.js";
 import QRCode from "qrcode";
 import input from "input";
 import fs from "fs";
 import dotenv from "dotenv";
-
-// Solución definitiva para importación de eventos en ESM/Node 20
-const NewMessage = pkgEvents.NewMessage || pkgEvents.default?.NewMessage;
-const CallbackQuery = pkgEvents.CallbackQuery || pkgEvents.default?.CallbackQuery;
 
 dotenv.config();
 
@@ -223,6 +220,9 @@ async function loadMenu() {
 
 
 async function startBot() {
+  // Crear carpeta temporal si no existe
+  if (!fs.existsSync("./temp")) fs.mkdirSync("./temp", { recursive: true });
+
   await initializeDatabase();
   await loadExternalCommands();
   const menuData = await loadMenu();

@@ -53,6 +53,7 @@ export default {
       }
 
      
+      if (!fs.existsSync('./temp')) fs.mkdirSync('./temp', { recursive: true });
       const tempPath = path.join('./temp', `sticker_${Date.now()}.jpg`);
       fs.writeFileSync(tempPath, imageBuffer);
 

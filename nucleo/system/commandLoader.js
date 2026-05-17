@@ -50,8 +50,6 @@ function isNSFWAllowed(ctx) {
 }
 
 export async function loadCommands() {
-  console.log('📦 Cargando comandos...');
-  
 
   const commandFolders = [
     '../../commands/economia',
@@ -73,7 +71,6 @@ export async function loadCommands() {
     const folderPath = path.join(__dirname, folder);
     
     if (!fs.existsSync(folderPath)) {
-      console.log(`⚠️ Carpeta no encontrada: ${folder}`);
       continue;
     }
 
@@ -101,7 +98,6 @@ export async function loadCommands() {
             }
             
             totalCommands++;
-            console.log(`✅ Comando cargado: ${file} (${commands.join(', ')})`);
           }
         } catch (error) {
           console.error(`❌ Error cargando comando ${file}:`, error.message);
@@ -112,8 +108,6 @@ export async function loadCommands() {
     }
   }
 
-  console.log(`🎉 ¡Se cargaron ${totalCommands} comandos exitosamente!`);
-  console.log(`📊 Total de comandos disponibles: ${global.commands.size}`);
 }
 
 export async function executeCommand(ctx, commandName, args) {
