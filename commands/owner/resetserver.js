@@ -4,14 +4,8 @@ export default {
   command: ['resetserver', 'reiniciarservidor'],
   category: 'owner',
   description: 'Reiniciar la vinculación del servidor',
+  isOwner: true,
   async run(ctx, args) {
-    const userId = ctx.from.id.toString();
-    
-    // Verificar si es owner
-    if (!global.owner.includes(userId)) {
-      return ctx.reply('❌ Solo el owner puede usar este comando.');
-    }
-
     try {
       // Resetear servidor
       serverQR.resetServer();

@@ -1,4 +1,3 @@
-import ytdl from 'ytdl-core';
 import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
@@ -58,24 +57,28 @@ export default {
         });
 
         const videoIdMatch = searchResponse.data.match(/"videoId":"([^"]+)"/);
+        const titleMatch = searchResponse.data.match(/"title":\{"runs":\[\{"text":"([^"]+)"/);
+        
         if (!videoIdMatch) {
           return ctx.reply('❌ No se encontraron resultados para tu búsqueda');
         }
         
         videoId = videoIdMatch[1];
+        title = titleMatch ? titleMatch[1] : 'Video encontrado';
       }
-
-      user.lastVideoId = videoId;
 
       if (!videoId) {
         return ctx.reply('❌ No se encontró el video');
       }
 
+      user.lastVideoId = videoId;
+      user.lastVideoTitle = title;
+
       try {
         const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
         
         await ctx.replyWithPhoto(thumbnailUrl, {
-          caption: `✨ **YOUTUBE PLAY** ✨\n\n🆔 **ID:** ${videoId}\n\n📥 **Selecciona o responde con el número:**\n1️⃣ Audio MP3\n2️⃣ Video MP4\n3️⃣ Audio WAV\n4️⃣ Video AVI\n\n💙 **Hatsune Miku Bot**`,
+          caption: `✨ **YOUTUBE PLAY** ✨\n\n📝 **Título:** ${title}\n🆔 **ID:** ${videoId}\n\n📥 **Opciones:**\n1️⃣ Audio MP3\n2️⃣ Video MP4\n3️⃣ Audio WAV\n4️⃣ Video AVI\n\n💙 **Hatsune Miku Bot**`,
           parseMode: 'md', 
           ...global.Markup.inlineKeyboard([
             [
@@ -144,8 +147,11 @@ export default {
           const isVideo = formatInfo.api === 'ytmp4';
           const dlData = isVideo ? apiResponse.data.result : apiResponse.data.data;
           
+          const userId = ctx.senderId;
+          const savedTitle = global.db.data.users[userId]?.lastVideoTitle || 'YouTube File';
+          
           const downloadUrl = isVideo ? dlData.downloadUrl : dlData.dl;
-          const fileName = isVideo ? `${dlData.title}.mp4` : dlData.fileName;
+          const fileName = isVideo ? `${dlData.title || savedTitle}.mp4` : dlData.fileName;
           
           const fileResponse = await axios.get(downloadUrl, {
             responseType: 'stream'
@@ -163,12 +169,10 @@ export default {
           
           await ctx.client.sendFile(ctx.chatId, {
             file: filePath,
-            caption: `✅ **${formatInfo.name} descargado**\n\n💙 **Hatsune Miku Bot**`,
+            caption: `✅ **${formatInfo.name} descargado**\n📝 **Título:** ${savedTitle}\n\n💙 **Hatsune Miku Bot**`,
             parseMode: 'markdown',
             supportsStreaming: isVideo
           });
-          
-          await ctx.react('✅');
           
           setTimeout(() => {
             try {
