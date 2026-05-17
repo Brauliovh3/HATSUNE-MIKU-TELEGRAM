@@ -162,7 +162,7 @@ export default {
           const totalBytes = parseInt(fileResponse.headers['content-length'], 10) || 0;
 
           if (ctx.react) await ctx.react('📥');
-          let progressMsg = await ctx.reply(`⏳ **Descargando:** 0.0%\n📝 **Archivo:** \`${savedTitle}\`\n📦 **Tamaño:** ${(totalBytes / 1024 / 1024).toFixed(2)} MB`);
+          let progressMsg = await ctx.reply(`⏳ **Descargando:** 0%\n📝 **Archivo:** \`${savedTitle}\`\n📦 **Tamaño:** ${(totalBytes / 1024 / 1024).toFixed(2)} MB`);
 
           let downloadedBytes = 0;
           let lastUpdate = Date.now();
@@ -193,8 +193,9 @@ export default {
             fileWriter.on('error', reject);
           });
           
+          
           if (progressMsg) {
-            await ctx.client.editMessage(ctx.chatId, { id: progressMsg.id, message: '📤 **Enviando a Telegram...**' }).catch(() => {});
+            await ctx.client.deleteMessages(ctx.chatId, [progressMsg.id], { revoke: true }).catch(() => {});
           }
           
           const thumbPath = path.join('./temp', `thumb_${videoId}.jpg`);
