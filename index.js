@@ -1,6 +1,6 @@
-import { TelegramClient, events } from "telegram";
+import pkg from "telegram";
+const { TelegramClient, Api, events } = pkg;
 import { StringSession } from "telegram/sessions/index.js";
-import { Api } from "telegram";
 import QRCode from "qrcode";
 import input from "input";
 import fs from "fs";
@@ -253,20 +253,19 @@ async function startBot() {
     const chatId = msg.chatId;
     const senderId = msg.senderId?.toString();
 
-   
-    if (!text.startsWith(".")) return;
+    // Regex para detectar comandos que empiecen con "." seguido opcionalmente de espacios
+    const match = text.match(/^\.\s*([a-zA-Z0-9]+)(?:\s+(.*))?$/s);
+    if (!match) return;
 
-   
+    const cmdName = match[1].toLowerCase();
+    const args = match[2] ? match[2].trim().split(/\s+/) : [];
+
     const isOwn = senderId === myId;
     const origen = isOwn ? "YO" : `ID:${senderId}`;
     console.log(`📩 [${new Date().toLocaleTimeString()}] [${origen}] Chat:${chatId} → ${text}`);
 
    
     if (global.commands) {
-      const parts = text.slice(1).split(" ");
-      const cmdName = parts[0].toLowerCase();
-      const args = parts.slice(1);
-      
       const cmd = global.commands.get(cmdName);
       
       if (cmd) {
@@ -339,10 +338,10 @@ async function startBot() {
    
    
 
-  }, new NewMessage({
-    outgoing: true,  
-    incoming: true,   
-  }, new events.NewMessage({})));
+  }, new events.NewMessage({
+    outgoing: true,
+    incoming: true
+  }));
 
   
   client.addEventHandler(async (event) => {
