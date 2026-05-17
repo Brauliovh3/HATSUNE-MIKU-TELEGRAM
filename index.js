@@ -1,7 +1,5 @@
-import { TelegramClient } from "telegram";
+import { TelegramClient, events } from "telegram";
 import { StringSession } from "telegram/sessions/index.js";
-import pkgEvents from "telegram/events/index.js";
-const { NewMessage, CallbackQuery } = pkgEvents;
 import { Api } from "telegram";
 import QRCode from "qrcode";
 import input from "input";
@@ -344,7 +342,7 @@ async function startBot() {
   }, new NewMessage({
     outgoing: true,  
     incoming: true,   
-  }));
+  }, new events.NewMessage({})));
 
   
   client.addEventHandler(async (event) => {
@@ -384,12 +382,12 @@ async function startBot() {
               alert: true
             }));
           } catch (err) {
-            // Ignorar si no se puede responder
+           
           }
         }
       }
     }
-  }, new CallbackQuery({}));
+  }, new events.CallbackQuery({}));
 
   console.log("🎧 Escuchando comandos en todos los chats...");
   console.log("💡 Todos los comandos están cargados desde carpetas\n");
