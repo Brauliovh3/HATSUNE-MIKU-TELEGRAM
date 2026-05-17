@@ -1,5 +1,5 @@
 import { mainMenuImage } from '../../nucleo/menuConfig.js';
-import { bodyMenu } from '../../nucleo/commands.js';
+import { categoryNames } from '../../nucleo/menuConfig.js';
 import settings from '../../settings.js';
 
 export default {
@@ -14,42 +14,46 @@ export default {
       const userName = ctx.from?.firstName || 'Usuario';
       const time = new Date().toLocaleTimeString();
 
-      
+     
       const menuHeader = 
-        `┌───「 💙 **${chatSettings.namebot || 'HATSUNE MIKU'}** 💙 」───┐\n` +
-        `│\n` +
-        `│ 👤 **Hola:** ${userName}\n` +
-        `│ ⌨️ **Prefijo:** [ \`${prefix}\` ]\n` +
-        `│ 👑 **Owner:** ${chatSettings.owner || '(ㅎㅊDEPOOLㅊㅎ)'}\n` +
-        `│ 📢 **Canal:** Click Aquí\n` +
-        `│ ⏰ **Hora:** ${time}\n` +
-        `│\n` +
-        `└───────────────────────────┘\n\n` +
-        `✨ _¡Hola! Soy Hatsune Miku, tu asistente de Telegram. Aquí tienes mis comandos disponibles:_`;
+        `╭──〔 **${chatSettings.namebot || 'MIKU'}** 〕──╮\n` +
+        `┃ 👤 **User:** ${userName}\n` +
+        `┃ ⌨️ **Prefix:** \`${prefix}\`\n` +
+        `┃ 👑 **Owner:** ${chatSettings.owner}\n` +
+        `┃ ⏰ **Hora:** ${time}\n` +
+        `╰──────────────╯\n\n`;
 
      
-      const formattedBody = bodyMenu.split('\n').map(line => {
-        if (line.includes(' .')) return line.replace(' .', ` ${prefix}`);
-        return line;
-      }).join('\n');
+      const categories = {};
+      global.commands.forEach((cmd, name) => {
+        const mainCmd = Array.isArray(cmd.command) ? cmd.command[0].toLowerCase() : cmd.command.toLowerCase();
+        if (name !== mainCmd) return; 
+        
+        const cat = cmd.category || 'otros';
+        if (!categories[cat]) categories[cat] = [];
+        categories[cat].push(name);
+      });
 
       
+      let menuBody = "✨ **LISTA DE COMANDOS** ✨\n\n";
+      for (const [catId, catDisplayName] of Object.entries(categoryNames)) {
+        const cmds = categories[catId];
+        if (!cmds || cmds.length === 0) continue;
+        
+        menuBody += `┌──『 **${catDisplayName}** 』\n`;
+        cmds.sort().forEach(c => {
+          menuBody += `│ ✧ ${prefix}${c}\n`;
+        });
+        menuBody += `└──────────╼\n\n`;
+      }
+
+     
       await ctx.replyWithPhoto(mainMenuImage, {
-        caption: menuHeader,
         parseMode: 'markdown'
       });
 
       
-      const categories = formattedBody.split('\n\n');
-      let currentMsg = '';
-      for (const category of categories) {
-        if ((currentMsg.length + category.length + 2) > 4000) {
-          await ctx.reply(currentMsg.trim(), { parseMode: 'markdown' });
-          currentMsg = '';
-        }
-        currentMsg += category + '\n\n';
-      }
-      if (currentMsg) await ctx.reply(currentMsg.trim(), { parseMode: 'markdown' });
+      await ctx.reply(menuHeader + menuBody, { parseMode: 'markdown' });
 
       if (ctx.react) await ctx.react('💙');
 
