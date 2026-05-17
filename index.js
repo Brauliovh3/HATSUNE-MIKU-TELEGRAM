@@ -291,18 +291,33 @@ async function startBot() {
             myId,
             reply: async (options) => {
               const opts = typeof options === 'string' ? { message: options } : { ...options };
-              if (opts.parse_mode) {
-                opts.parseMode = opts.parse_mode.toLowerCase();
+              if (opts.parse_mode || opts.parseMode) {
+                const pm = (opts.parse_mode || opts.parseMode).toLowerCase();
+                opts.parseMode = pm === 'markdown' ? 'md' : pm;
                 delete opts.parse_mode;
               }
               if (opts.caption && !opts.message) opts.message = opts.caption;
-              return await client.sendMessage(chatId, opts);
+              return await client.sendMessage(msg.peerId, opts);
             },
             replyWithVideo: async (video, opts = {}) => {
               const sendOpts = { ...opts, file: video.source || video };
-              if (sendOpts.parse_mode) sendOpts.parseMode = sendOpts.parse_mode.toLowerCase();
+              if (sendOpts.parse_mode || sendOpts.parseMode) {
+                const pm = (sendOpts.parse_mode || sendOpts.parseMode).toLowerCase();
+                sendOpts.parseMode = pm === 'markdown' ? 'md' : pm;
+                delete sendOpts.parse_mode;
+              }
               if (sendOpts.caption) sendOpts.message = sendOpts.caption;
-              return await client.sendFile(chatId, sendOpts);
+              return await client.sendFile(msg.peerId, sendOpts);
+            },
+            replyWithPhoto: async (photo, opts = {}) => {
+              const sendOpts = { ...opts, file: photo.source || photo };
+              if (sendOpts.parse_mode || sendOpts.parseMode) {
+                const pm = (sendOpts.parse_mode || sendOpts.parseMode).toLowerCase();
+                sendOpts.parseMode = pm === 'markdown' ? 'md' : pm;
+                delete sendOpts.parse_mode;
+              }
+              if (sendOpts.caption) sendOpts.message = sendOpts.caption;
+              return await client.sendFile(msg.peerId, sendOpts);
             },
             from: msg.sender || await msg.getSender(),
             message: msg
@@ -327,7 +342,7 @@ async function startBot() {
 
   
   client.addEventHandler(async (event) => {
-    // En GramJS el evento recibido es directamente el objeto de la query
+    
     const query = event.query || event;
     if (!query.data) return;
     const data = query.data.toString();

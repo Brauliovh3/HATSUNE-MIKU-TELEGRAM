@@ -49,7 +49,7 @@ export default {
       }
 
       if (!imageBuffer) {
-        return ctx.reply('📸 *USO:* Responde a una imagen o envía una imagen con el comando\n📝 *Ejemplo:* .s (respondiendo a una imagen)');
+        return ctx.reply('💙 Responde a una imagen o envía una imagen con el comando\n📝 Ejemplo: .s respondiendo a una imagen');
       }
 
      
