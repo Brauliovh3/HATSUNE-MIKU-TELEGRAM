@@ -58,12 +58,16 @@ client.setLogLevel("error");
 
 if (botToken && botToken.length > 10) {
   await client.start({ botAuthToken: botToken });
-  console.log("💙 HATSUNE MIKU BOT ONLINE (Token) 💙");
-  startBot();
+  const me = await client.getMe();
+  process.stdout.write("\x1Bc"); 
+  console.log(`💙 BOT ONLINE: ${me.firstName} (@${me.username || 'sin user'}) [ID: ${me.id}] 💙`);
+  startBot(me);
 } else if (sessionString.length > 5) {
   await client.connect();
-  console.log("👤 HATSUNE MIKU USERBOT ONLINE 👤");
-  startBot();
+  const me = await client.getMe();
+  process.stdout.write("\x1Bc"); 
+  console.log(`👤 USERBOT ONLINE: ${me.firstName} (@${me.username || 'sin user'}) [ID: ${me.id}] 👤`);
+  startBot(me);
 } else {
   console.log("1 => Login por código (recomendado en servidor)");
   console.log("2 => Login por QR\n");
@@ -222,15 +226,14 @@ async function loadMenu() {
 }
 
 
-async function startBot() {
-  // Crear carpeta temporal si no existe
+async function startBot(me) {
+  
   if (!fs.existsSync("./temp")) fs.mkdirSync("./temp", { recursive: true });
 
   await initializeDatabase();
   await loadExternalCommands();
   const menuData = await loadMenu();
 
-  const me = await client.getMe();
   const myId = me.id?.toString();
 
 
