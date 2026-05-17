@@ -35,9 +35,21 @@ export default {
 
       
       await ctx.replyWithPhoto(mainMenuImage, {
-        caption: menuHeader + '\n\n' + formattedBody,
+        caption: menuHeader,
         parseMode: 'markdown'
       });
+
+      
+      const categories = formattedBody.split('\n\n');
+      let currentMsg = '';
+      for (const category of categories) {
+        if ((currentMsg.length + category.length + 2) > 4000) {
+          await ctx.reply(currentMsg.trim(), { parseMode: 'markdown' });
+          currentMsg = '';
+        }
+        currentMsg += category + '\n\n';
+      }
+      if (currentMsg) await ctx.reply(currentMsg.trim(), { parseMode: 'markdown' });
 
       if (ctx.react) await ctx.react('💙');
 
