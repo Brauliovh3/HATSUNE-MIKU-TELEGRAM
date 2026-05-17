@@ -42,7 +42,7 @@ export default {
         
         menuBody += `┌──『 **${catDisplayName}** 』\n`;
         cmds.sort().forEach(c => {
-          menuBody += `│ ✧ ${prefix}${c}\n`;
+          menuBody += `│ 💙 ${prefix}${c}\n`;
         });
         menuBody += `└──────────╼\n\n`;
       }

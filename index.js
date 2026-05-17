@@ -328,12 +328,22 @@ async function startBot(me) {
             myId,
             react: async (emoticon) => {
               try {
-                const inputPeer = await msg.getInputChat();
-                return await client.invoke(new Api.messages.SendReaction({
-                  peer: inputPeer,
-                  msgId: msg.id,
-                  reaction: emoticon ? [new Api.ReactionEmoji({ emoticon: emoticon })] : []
-                }));
+                const inputPeer = await client.getInputEntity(msg.peerId);
+                const send = async (emo) => {
+                  return await client.invoke(new Api.messages.SendReaction({
+                    peer: inputPeer,
+                    msgId: msg.id,
+                    reaction: emo ? [new Api.ReactionEmoji({ emoticon: emo })] : []
+                  }));
+                };
+                try {
+                  return await send(emoticon);
+                } catch (err) {
+                 
+                  if (err.errorMessage === 'REACTION_INVALID' && emoticon !== '👍') {
+                    return await send('👍');
+                  }
+                }
               } catch (e) { console.error("Error al reaccionar:", e.message); }
             },
             answerCallbackQuery: async () => {}, 
@@ -408,12 +418,22 @@ async function startBot(me) {
             senderId: query.userId?.toString(),
             react: async (emoticon) => {
               try {
-                const inputPeer = query.peer; 
-                return await client.invoke(new Api.messages.SendReaction({
-                  peer: inputPeer,
-                  msgId: query.msgId,
-                  reaction: emoticon ? [new Api.ReactionEmoji({ emoticon: emoticon })] : []
-                }));
+                const inputPeer = await client.getInputEntity(query.peer);
+                const send = async (emo) => {
+                  return await client.invoke(new Api.messages.SendReaction({
+                    peer: inputPeer,
+                    msgId: query.msgId,
+                    reaction: emo ? [new Api.ReactionEmoji({ emoticon: emo })] : []
+                  }));
+                };
+                try {
+                  return await send(emoticon);
+                } catch (err) {
+                  // Fallback para callback queries también
+                  if (err.errorMessage === 'REACTION_INVALID' && emoticon !== '👍') {
+                    return await send('👍');
+                  }
+                }
               } catch (e) { }
             },
             answerCallbackQuery: async (options) => {
