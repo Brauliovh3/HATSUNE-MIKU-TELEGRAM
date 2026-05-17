@@ -74,12 +74,10 @@ export default {
           caption: `🎵 *VIDEO ENCONTRADO* 🎵\n\n📝 *Título:* ${title}\n🆔 *ID:* ${videoId}\n\n📥 *Elige formato para descargar:*`,
           parseMode: 'md',
           ...global.Markup.inlineKeyboard([
-            [global.Markup.button.callback('🎵 Audio MP3', `audio_${videoId}`), global.Markup.button.callback('🎥 Video MP4', `video_${videoId}`)],
-            [global.Markup.button.callback('🎼 Audio WAV', `wav_${videoId}`), global.Markup.button.callback('🎬 Video AVI', `avi_${videoId}`)],
-            [global.Markup.button.callback('📹 Video MOV', `mov_${videoId}`), global.Markup.button.callback('🎞️ Video MKV', `mkv_${videoId}`)],
-            [global.Markup.button.callback('🎧 Audio FLAC', `flac_${videoId}`), global.Markup.button.callback('🎵 Audio AAC', `aac_${videoId}`)],
-            [global.Markup.button.callback('📽️ Video WEBM', `webm_${videoId}`), global.Markup.button.callback('🎥 Video 3GP', `3gp_${videoId}`)],
-            [global.Markup.button.callback('🎵 Audio OGG', `ogg_${videoId}`), global.Markup.button.callback('🎥 Video M4V', `m4v_${videoId}`)]
+            [global.Markup.button.callback('🎵 MP3', `audio_${videoId}`), global.Markup.button.callback('🎥 MP4', `video_${videoId}`), global.Markup.button.callback('🎼 WAV', `wav_${videoId}`)],
+            [global.Markup.button.callback('🎬 AVI', `avi_${videoId}`), global.Markup.button.callback('📹 MOV', `mov_${videoId}`), global.Markup.button.callback('🎞️ MKV', `mkv_${videoId}`)],
+            [global.Markup.button.callback('🎧 FLAC', `flac_${videoId}`), global.Markup.button.callback('🎵 AAC', `aac_${videoId}`), global.Markup.button.callback('📽️ WEBM', `webm_${videoId}`)],
+            [global.Markup.button.callback('🎥 3GP', `3gp_${videoId}`), global.Markup.button.callback('🎵 OGG', `ogg_${videoId}`), global.Markup.button.callback('🎥 M4V', `m4v_${videoId}`)]
           ])
         });
 
@@ -95,8 +93,7 @@ export default {
           message: message,
           parse_mode: 'markdown',
           ...global.Markup.inlineKeyboard([
-            [global.Markup.button.callback('🎵 Descargar Audio MP3', `audio_${videoId}`)],
-            [global.Markup.button.callback('🎥 Descargar Video MP4', `video_${videoId}`)]
+            [global.Markup.button.callback('🎵 Audio MP3', `audio_${videoId}`), global.Markup.button.callback('🎥 Video MP4', `video_${videoId}`)]
           ])
         });
       }

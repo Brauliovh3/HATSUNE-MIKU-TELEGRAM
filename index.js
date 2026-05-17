@@ -1,4 +1,4 @@
-import pkg from "telegram";
+import pkg from 'telegram';
 const { TelegramClient, Api, events } = pkg;
 import { StringSession } from "telegram/sessions/index.js";
 import QRCode from "qrcode";
@@ -253,7 +253,7 @@ async function startBot() {
     const chatId = msg.chatId;
     const senderId = msg.senderId?.toString();
 
-    // Regex para detectar comandos que empiecen con "." seguido opcionalmente de espacios
+    // Detección mejorada: permite "." solo, o "." seguido de cualquier cantidad de espacios y luego el comando
     const match = text.match(/^\.\s*([a-zA-Z0-9]+)(?:\s+(.*))?$/s);
     if (!match) return;
 
