@@ -56,9 +56,11 @@ export default {
       await ctx.replyWithVideo({ 
         source: Buffer.from(videoResponse.data) 
       }, {
-        fileName: 'tiktok.mp4',
+        mimeType: 'video/mp4',
+        fileName: 'tiktok_video.mp4',
+        supportsStreaming: true,
         caption: caption,
-        parseMode: 'markdown' 
+        parseMode: 'markdown'
       });
 
     } catch (error) {
