@@ -1,17 +1,16 @@
-import pkg from 'telegram';
-const { TelegramClient, Api, Logger } = pkg;
-import pkgEvents from 'telegram/events/index.js';
-const { NewMessage, CallbackQuery } = pkgEvents;
+import { TelegramClient, Api } from "telegram";
+import pkgEvents from "telegram/events/index.js";
 import { StringSession } from "telegram/sessions/index.js";
 import QRCode from "qrcode";
 import input from "input";
 import fs from "fs";
 import dotenv from "dotenv";
 
+// Solución definitiva para importación de eventos en ESM/Node 20
+const NewMessage = pkgEvents.NewMessage || pkgEvents.default?.NewMessage;
+const CallbackQuery = pkgEvents.CallbackQuery || pkgEvents.default?.CallbackQuery;
+
 dotenv.config();
-
-
-Logger.setLevel("error");
 
 const apiId = parseInt(process.env.API_ID);
 const apiHash = process.env.API_HASH;
@@ -44,16 +43,10 @@ if (fs.existsSync("./session.txt")) {
   if (fs.existsSync("./session.json")) {
     try {
       sessionData = JSON.parse(fs.readFileSync("./session.json", "utf8"));
-      console.log("📁 Sesión encontrada:");
-      console.log(`👤 Usuario: ${sessionData.firstName || "N/A"} ${sessionData.lastName || ""}`);
-      console.log(`🆔 ID: ${sessionData.userId || "N/A"}`);
-      console.log(`📅 Creada: ${new Date(sessionData.created).toLocaleString()}`);
     } catch (e) {
-      console.log("⚠️ Error leyendo session.json, usando solo session.txt");
     }
   }
 }
-
 
 const client = new TelegramClient(
   new StringSession(sessionString),
@@ -62,19 +55,16 @@ const client = new TelegramClient(
   { connectionRetries: 5 }
 );
 
-console.log("=================================");
-console.log("💙 HATSUNE MIKU BOT 💙");
-console.log("=================================\n");
-
 if (botToken && botToken.length > 10) {
-  console.log("🤖 Iniciando como BOT con Token de BotFather...");
   await client.start({ botAuthToken: botToken });
-  console.log("✅ Bot conectado exitosamente\n");
+  // Silenciar logs internos de GramJS (Reemplaza Logger.setLevel)
+  client.setLogLevel("error");
+  console.log("💙 HATSUNE MIKU BOT ONLINE (Token) 💙");
   startBot();
 } else if (sessionString.length > 5) {
-  console.log("✅ Sesión encontrada");
   await client.connect();
-  console.log("👤 Userbot conectado\n");
+  client.setLogLevel("error");
+  console.log("👤 HATSUNE MIKU USERBOT ONLINE 👤");
   startBot();
 } else {
   console.log("1 => Login por código (recomendado en servidor)");
@@ -206,9 +196,7 @@ async function loadExternalCommands() {
   try {
     const { loadCommands } = await import("./nucleo/system/commandLoader.js");
     await loadCommands();
-    console.log("📦 Comandos externos cargados\n");
   } catch (e) {
-    console.log("⚠️ No se pudieron cargar comandos externos:", e.message);
   }
 }
 
@@ -217,9 +205,7 @@ async function initializeDatabase() {
   try {
     const { loadDatabase } = await import("./nucleo/system/initDB.js");
     loadDatabase();
-    console.log("📁 Base de datos inicializada\n");
   } catch (e) {
-    console.log("⚠️ Error inicializando base de datos:", e.message);
   }
 }
 
@@ -237,11 +223,6 @@ async function loadMenu() {
 
 
 async function startBot() {
-  console.log("=================================");
-  console.log("🟢 USERBOT ONLINE");
-  console.log("=================================\n");
-
- 
   await initializeDatabase();
   await loadExternalCommands();
   const menuData = await loadMenu();
@@ -393,14 +374,11 @@ async function startBot() {
     }
   }, new CallbackQuery({}));
 
-  console.log("🎧 Escuchando comandos en todos los chats...");
-  console.log("💡 Todos los comandos están cargados desde carpetas\n");
+  console.log("🚀 Bot listo para recibir comandos.");
 }
 
 process.on("uncaughtException", (err) => {
-  console.error("💥 Error no capturado:", err.message);
 });
 
 process.on("unhandledRejection", (err) => {
-  console.error("💥 Promesa rechazada:", err?.message || err);
 });
